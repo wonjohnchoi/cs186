@@ -63,7 +63,7 @@ public class BufferPool {
             // but I think this may not be the most efficient approach.
             Page page = null;
             Iterator<Integer> tableIdIterator = Database.getCatalog().tableIdIterator();
-            while (tableIdIterator.hasNext()) {
+            while (tableIdIterator.hasNext() && page == null) {
                 int tableId = tableIdIterator.next();
                 try {
                     page = Database.getCatalog().getDbFile(tableId).readPage(pid);
