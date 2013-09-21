@@ -49,7 +49,7 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-	return tupleNo == ((RecordId)o).tupleno();
+        return (tupleNo == ((RecordId)o).tupleno() && o instanceof RecordId && ;
     }
 
     /**

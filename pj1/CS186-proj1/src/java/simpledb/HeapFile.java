@@ -35,8 +35,7 @@ public class HeapFile implements DbFile {
     public HeapFile(File f, TupleDesc td) {
         file = f;
         this.td = td;
-        id = f.hashCode() + td.hashCode();
-        
+        id = f.hashCode() + td.hashCode();     
     }
 
     /**
@@ -108,7 +107,8 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        return new DbFileIterator() ;
+        // need to write iterator
+        return null;
     }
 
 }
