@@ -227,9 +227,9 @@
     
     <target name="handin" depends="clean"
         description="Create a tarball of your code to hand in">
-        <tar destfile="CS186-proj1.tar.gz" compression="gzip"
+        <tar destfile="lab-handin.tar.bz2" compression="bzip2"
             basedir="." />
-        <echo message="Tarball created!  Please submit 'CS186-proj1.tar.gz' per the instructions in the project document." />
+        <echo message="Tarball created!  Please submit 'lab-handin.tar.bz2' per the instructions in the lab document." />
     </target>
 
     <target name="test-and-handin" depends="test,systemtest,handin"

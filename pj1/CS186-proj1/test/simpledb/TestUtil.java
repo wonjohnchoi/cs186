@@ -236,9 +236,9 @@ public class TestUtil {
             throw new RuntimeException("not implemented");
         }
 
-        public TupleDesc getTupleDesc() {            
-            return td;
-        }
+		public TupleDesc getTupleDesc() {			
+			return td;
+		}
     }
 
     /**
@@ -283,19 +283,19 @@ public class TestUtil {
             return tup;
         }
 
-        public boolean hasNext() throws DbException, TransactionAbortedException {
-            if (cur >= high) return false;
-            return true;
-        }
+		public boolean hasNext() throws DbException, TransactionAbortedException {
+			if (cur >= high) return false;
+			return true;
+		}
 
-        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-            if(cur >= high) throw new NoSuchElementException();
+		public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+			if(cur >= high) throw new NoSuchElementException();
             Tuple tup = new Tuple(getTupleDesc());
             for (int i = 0; i < width; ++i)
                 tup.setField(i, new IntField(cur));
             cur++;
             return tup;
-        }
+		}
     }
 
     /**
@@ -383,7 +383,7 @@ public class TestUtil {
 
         protected void setUp() throws Exception {
             try{
-                Database.reset();
+            	Database.reset();
                 empty = Utility.createEmptyHeapFile(emptyFile.getAbsolutePath(), 2);
             } catch (IOException e) {
                 throw new RuntimeException(e);
