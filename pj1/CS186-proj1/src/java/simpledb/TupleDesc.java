@@ -62,10 +62,13 @@ public class TupleDesc implements Serializable {
      *            be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
+        fields = new ArrayList<TDItem>(typeAr.length);
+        fieldNamesToIndex = new HashMap<String, Integer>();
+
         for (int i = 0; i < typeAr.length; i++) {
             fields.add(new TDItem(typeAr[i], fieldAr[i]));
             if (!fieldNamesToIndex.containsKey(fieldAr[i])) {
-                   fieldNamesToIndex.put(fieldAr[i], i);
+                fieldNamesToIndex.put(fieldAr[i], i);
             }
         }
 
