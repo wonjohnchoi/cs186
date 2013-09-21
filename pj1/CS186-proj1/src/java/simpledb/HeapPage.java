@@ -38,7 +38,7 @@ public class HeapPage implements Page {
      * @see BufferPool#PAGE_SIZE
      */
     public HeapPage(HeapPageId id, byte[] data) throws IOException {
-        this.pid = id;
+        pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
@@ -289,9 +289,9 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         int b = (new Byte(header[(int)Math.floor(i / 8)])).intValue();
-        int offset = (int)(i - Math.floor(i / 8) * 8);
-        int bit = b >> (7 - offset);
-        return bit == 1;
+        int offset = i % 8;
+
+        return ((b >> offset) & 1) == 1;
     }
 
     /**
@@ -312,14 +312,19 @@ public class HeapPage implements Page {
             public boolean hasNext() {
                 return i < tuples.length;
             }
-            public Tuple next() {
-                return tuples[i++];
+            public Tuple next() throws NoSuchElementException {
+                if (hasNext()) {
+                    return tuples[i++];
+                } else {
+                    return null;
+                }
             }
             public void remove() {
                 // may need to be implemented
                 throw new UnsupportedOperationException();
-            }              
-        };
+            }
+        };              
+            
     }
 
 }
