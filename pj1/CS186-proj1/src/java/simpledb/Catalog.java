@@ -41,15 +41,14 @@ public class Catalog {
      * conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        nameTable.put(name, new Table(file, name, pkeyField));
-	idTable.put(file.getId(), new Table(file, name, pkeyField));
-	idList.add(file.getId());
+        Table table = new Table(file, name, pkeyField);
+        nameTable.put(name, table);
+        idTable.put(file.getId(), table);
+        idList.add(file.getId());
     }
 
     public void addTable(DbFile file, String name) {
-	// can be modified?
         addTable(file, name, "");
-	idList.add(file.getId());
     }
 
     /**
@@ -61,7 +60,6 @@ public class Catalog {
      */
     public void addTable(DbFile file) {
         addTable(file, (UUID.randomUUID()).toString());
-	idList.add(file.getId());
     }
 
     /**
