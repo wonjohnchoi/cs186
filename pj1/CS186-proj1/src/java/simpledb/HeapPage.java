@@ -65,9 +65,9 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-        // some code goes here
-        return 0;
-
+        int tupleSize = Database.getCatalog().getTupleDesc(pid.getTableId()).getSize();
+        int numTuples = (int)Math.floor((BufferPool.PAGE_SIZE * 8) / (tupleSize * 8 + 1));
+        return numTuples;
     }
 
     /**
@@ -75,10 +75,7 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        
-        // some code goes here
-        return 0;
-                 
+        return (int)Math.ceil(numSlots / 8);
     }
     
     /** Return a view of this page before it was modified
@@ -102,8 +99,7 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -272,16 +268,30 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        // some code goes here
-        return 0;
+        // not sure if unvalid means empty. 
+        // treating unvalid slots as emplty slots
+        int count = 0;
+        for (int i = 0; i < header.length; i++) {
+            int b = (new Byte(header[i])).intValue();
+            for (int j = 7; j >= 0; j--) {
+                int bit = b >> j;
+                bit = bit & 1;
+                if (bit == 0) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /**
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        // some code goes here
-        return false;
+        int b = (new Byte(header[(int)Math.floor(i / 8)])).intValue();
+        int offset = (int)(i - Math.floor(i / 8) * 8);
+        int bit = b >> (7 - offset);
+        return bit == 1;
     }
 
     /**
@@ -297,8 +307,19 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        // some code goes here
-        return null;
+        return new Iterator<Tuple>() {
+            int i = 0;
+            public boolean hasNext() {
+                return i < tuples.length;
+            }
+            public Tuple next() {
+                return tuples[i++];
+            }
+            public void remove() {
+                // may need to be implemented
+                throw new UnsupportedOperationException();
+            }              
+        };
     }
 
 }
