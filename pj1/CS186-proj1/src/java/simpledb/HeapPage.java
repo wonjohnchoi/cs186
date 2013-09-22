@@ -308,24 +308,29 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         return new Iterator<Tuple>() {
-            int i = 0;
-            public boolean hasNext() {
-                return i < tuples.length;
-            }
-            public Tuple next() throws NoSuchElementException {
-                if (hasNext()) {
-                    return tuples[i++];
-                } else {
-                    return null;
+            private ArrayList<Tuple> arrayToList(Tuple[] arr) {
+                ArrayList<Tuple> list = new ArrayList<Tuple>();
+                int i = 0;
+                for (; i < tuples.length; i++) {
+                    if (isSlotUsed(i)) {
+                        list.add(arr[i]);
+                    }
                 }
+                return list;
+            }
+            int i = 0;
+            ArrayList<Tuple> lst = arrayToList(tuples);
+            public boolean hasNext() {
+                return i < lst.size();
+            }
+            public Tuple next() {
+                return lst.get(i++);
             }
             public void remove() {
-                // may need to be implemented
                 throw new UnsupportedOperationException();
             }
-        };              
-            
+        };
     }
-
+    
 }
 
