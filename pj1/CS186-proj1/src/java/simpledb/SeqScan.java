@@ -15,6 +15,8 @@ public class SeqScan implements DbIterator {
     private String tableAlias;
     private DbFileIterator dbFileIterator;
     private boolean open = false;
+    private TupleDesc td;
+    private TupleDesc td_prefixed;
 
     /**
      * Creates a sequential scan over the specified table as a part of the
@@ -37,6 +39,7 @@ public class SeqScan implements DbIterator {
         this.tid = tid;
         this.tableid = tableid;
         this.tableAlias = tableAlias;
+        update_td(tableid, tableAlias);
     }
 
     /**
@@ -71,6 +74,7 @@ public class SeqScan implements DbIterator {
         this.tableid = tableid;
         this.tableAlias = tableAlias;
         // reset tableName??
+        update_td(tableid, tableAlias);
         close();
     }
 
@@ -84,7 +88,25 @@ public class SeqScan implements DbIterator {
         }
         dbFileIterator = Database.getCatalog().getDbFile(tableid).iterator(tid);
         dbFileIterator.open();
+        
         open = true;
+    }
+
+
+    private void update_td(int table_id, String tableAlias) {        
+        // should this be updated for reset? we will do for now.
+        this.td = Database.getCatalog().getDbFile(tableid).getTupleDesc();
+        Type[] typeAr = new Type[td.numFields()];
+        String[] fieldAr = new String[td.numFields()];
+        Iterator<TupleDesc.TDItem> it = td.iterator();
+        int i = 0;
+        while (it.hasNext()) {
+            TupleDesc.TDItem item = it.next();
+            typeAr[i] = item.fieldType;
+            fieldAr[i] = tableAlias + "." + item.fieldName;
+            i += 1;
+        }
+        this.td = new TupleDesc(typeAr, fieldAr);
     }
 
     /**
@@ -97,8 +119,7 @@ public class SeqScan implements DbIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        // TODO(wonjohn): think of a way to store tupleDesc as a variable.
-        return Database.getCatalog().getDbFile(tableid).getTupleDesc();
+        return td;
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
