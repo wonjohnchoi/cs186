@@ -66,7 +66,7 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         int tupleSize = Database.getCatalog().getTupleDesc(pid.getTableId()).getSize();
-        int numTuples = (int)Math.floor((BufferPool.PAGE_SIZE * 8) / (tupleSize * 8 + 1));
+        int numTuples = (int)((BufferPool.PAGE_SIZE * 8) / (tupleSize * 8 + 1));
         return numTuples;
     }
 
@@ -75,7 +75,7 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        return (int)Math.ceil(numSlots / 8);
+        return (int)Math.ceil((float)numSlots / 8);
     }
     
     /** Return a view of this page before it was modified
@@ -288,7 +288,7 @@ public class HeapPage implements Page {
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        int b = (new Byte(header[(int)Math.floor(i / 8)])).intValue();
+        int b = new Byte(header[(int) (i / 8)]).intValue();
         int offset = i % 8;
 
         return ((b >> offset) & 1) == 1;
