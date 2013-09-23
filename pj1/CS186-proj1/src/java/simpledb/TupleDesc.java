@@ -156,7 +156,7 @@ public class TupleDesc implements Serializable {
     public int fieldNameToIndex(String name) throws NoSuchElementException {
         // name == null must throw the exception.
         // See https://piazza.com/class/hhrd9gio9n21s5?cid=67
-        if (name == null || !fieldNamesToIndex.containsKey(name)) {
+        if (!fieldNamesToIndex.containsKey(name)) {
             throw new NoSuchElementException();
         }
         return fieldNamesToIndex.get(name);
