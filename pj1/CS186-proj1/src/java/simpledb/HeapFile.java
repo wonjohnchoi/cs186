@@ -35,7 +35,8 @@ public class HeapFile implements DbFile {
     public HeapFile(File f, TupleDesc td) {
         file = f;
         this.td = td;
-        id = f.hashCode() + td.hashCode();     
+        // This is recommended by getId function's comment.
+        id = f.getAbsoluteFile().hashCode();
     }
 
     /**
