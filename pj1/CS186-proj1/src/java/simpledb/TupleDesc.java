@@ -62,6 +62,10 @@ public class TupleDesc implements Serializable {
      *            be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
+        init(typeAr, fieldAr);
+    }
+
+    private void init(Type[] typeAr, String[] fieldAr) {
         fields = new ArrayList<TDItem>(typeAr.length);
         fieldNamesToIndex = new HashMap<String, Integer>();
 
@@ -89,6 +93,7 @@ public class TupleDesc implements Serializable {
             multipler = (multipler * primeNumber) % MOD;
         }
         hashcode = (int) hashcodeTmp;
+
     }
 
     /**
@@ -101,7 +106,9 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         // TODO: anonymous/unamed field?
-        this(typeAr, new String[typeAr.length]);
+        String[] fieldAr = new String[typeAr.length];
+        Arrays.fill(fieldAr, "");
+        init(typeAr, fieldAr);
     }
 
     /**
