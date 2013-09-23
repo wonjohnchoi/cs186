@@ -28,6 +28,9 @@ public class Tuple implements Serializable {
         this.td = td;
         rid = null;
         fields = new ArrayList<Field>(td.numFields());
+        for (int i = 0; i < td.numFields(); i++) {
+            fields.add(null);
+        }
     }
 
     /**
@@ -64,7 +67,7 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-        fields.add(i, f);
+        fields.set(i, f);
     }
 
     /**
