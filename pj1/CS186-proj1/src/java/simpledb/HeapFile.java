@@ -18,14 +18,16 @@ public class HeapFile implements DbFile {
     /**
      * Constructs a heap file backed by the specified file.
      * 
-     * @param f
+     * @Param f
      *            the file that stores the on-disk backing store for this heap
      *            file.
      */
-
+    
+    ArrayList<PageId> pids = new ArrayList<PageId>();
     File file;
     int id;
     TupleDesc td;
+    RandomAccessFile raf;
     /*
     byte header[];
     HeapPage pages[];
@@ -37,6 +39,13 @@ public class HeapFile implements DbFile {
         this.td = td;
         // This is recommended by getId function's comment.
         id = f.getAbsoluteFile().hashCode();
+        try {
+            raf = new RandomAccessFile(file, "rw");
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+            System.exit(1);
+            // TODO(wonjohn): find out what to do here.
+        }
     }
 
     /**
@@ -72,14 +81,33 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-        // some code goes here
+        byte[] data = new byte[BufferPool.PAGE_SIZE * 8];
+        try {
+            raf.seek(pid.pageNumber() * BufferPool.PAGE_SIZE);
+            raf.read(data);
+
+            // Casting is possible due to
+            // https://piazza.com/class/hhrd9gio9n21s5?cid=77
+            return new HeapPage((HeapPageId) pid, data);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.exit(1);
+            // TODO(wonjohn): find out what to do here.
+        }
         return null;
     }
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        try {
+            raf.seek(page.getId().pageNumber() * BufferPool.PAGE_SIZE * 8);
+            raf.write(page.getPageData());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.exit(1);
+            // TODO(wonjohn): find out what to do here.
+        }
+        pids.add(page.getId());
     }
 
     /**
@@ -87,6 +115,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         long size = file.length();
+        // TODO(wonjohn): fix this.
         return (int)(size / BufferPool.PAGE_SIZE);
     }
 
@@ -107,9 +136,52 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public DbFileIterator iterator(TransactionId tid) {
-        // need to write iterator
-        return null;
+    public DbFileIterator iterator(final TransactionId tid) {
+        return new DbFileIterator() {
+            BufferPool bp;
+            int pageNumber;
+            Iterator<Tuple> pageIt;
+
+            public void open()
+                throws DbException, TransactionAbortedException {
+                bp = new BufferPool(numPages());
+                pageIt = null;
+                pageNumber = 0;
+                
+                if (pageNumber < numPages()) {
+                    pageIt = ((HeapPage)bp.getPage(tid, new HeapPageId(id, pageNumber), null)).iterator();
+                    pageNumber += 1;
+                }
+            }
+            public boolean hasNext()
+                throws DbException, TransactionAbortedException {
+                if (pageIt == null) {
+                    return false;
+                }
+                while (!pageIt.hasNext() && pageNumber < numPages()) {
+                    pageIt = ((HeapPage)bp.getPage(tid, new HeapPageId(id, pageNumber), null)).iterator();
+                    pageNumber += 1;
+                } 
+                return pageIt.hasNext();
+            }
+            public Tuple next()
+                throws DbException, TransactionAbortedException, NoSuchElementException {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return pageIt.next();
+            }
+            public void rewind() throws DbException, TransactionAbortedException {
+                close();
+                open();
+            }
+            
+            public void close() {
+                bp = null;
+                pageNumber = 0;
+                pageIt = null;
+            }
+        };
     }
 
 }

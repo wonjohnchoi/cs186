@@ -30,6 +30,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         this.numPages = numPages;
+        pidToPage = new HashMap<PageId, Page>();
     }
 
     /**
@@ -57,11 +58,17 @@ public class BufferPool {
             if (pidToPage.size() == numPages) {
                 throw new DbException("BufferPool is full and we don't have an eviction policy.");
             }
-
+            
             // Fetch page.
             // TODO(wonjohn): I follow approach in https://piazza.com/class/hhrd9gio9n21s5?cid=70
             // but I think this may not be the most efficient approach.
             Page page = null;
+            try {
+                page = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+            } catch (IllegalArgumentException ex) {
+
+            }
+            /* // The following is inefficent.
             Iterator<Integer> tableIdIterator = Database.getCatalog().tableIdIterator();
             while (tableIdIterator.hasNext() && page == null) {
                 int tableId = tableIdIterator.next();
@@ -69,7 +76,7 @@ public class BufferPool {
                     page = Database.getCatalog().getDbFile(tableId).readPage(pid);
                 } catch (IllegalArgumentException ex) {}
             }
-
+            */
             // TODO(wonjohn): find out what we should do when page == null (not found).
             pidToPage.put(pid, page);
         }
