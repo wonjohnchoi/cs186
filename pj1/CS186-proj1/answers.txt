@@ -1,0 +1,18 @@
+Wonjohn Choi (cs186-de)
+Jisoo Kim
+
+1. In BufferPool, we decided to use HashMap to record mappings between PageId and Page, so we could find out whether a PageId is cached in a (nearly) constant time and could avoid fetching the same PageId twice.
+
+2. We did not make any API change. But we made one line of code that did not follow the comment; in HeapPageId's hashCode function, the comment asked us to compute hash code as "the concatenation of the table number and the page number." But doing so resulted in a overflow error when the concatenation was bigger than Integer.MAX_VALUE. Hence, we applied modular Integer.MAX_VALUE to the concatenation.
+
+3. We did not miss any elements except ones commented with "not necessary for project1/lab1." 
+
+4. Wonjohn mainly worked on implementation and debugging of TupleDesc, Tuple, BufferPool, HeapFile, SeqScan.
+
+Jisso mainly worked on implementation and debugging of Catalog, HeapPageId, RecordID, HeapPage.
+
+We give a lot of credits to Yan, Beidi, and Yanming for releasing their test codes (see Piazza). Thanks to them, our code got more robust.
+
+5. Wonjohn used roughly 14 hours on the project.
+
+We didn't find anything particularly difficult or confusing.
