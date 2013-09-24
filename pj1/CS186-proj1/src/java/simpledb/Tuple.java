@@ -11,7 +11,6 @@ import java.util.ArrayList;
  * with the data for each field.
  */
 public class Tuple implements Serializable {
-
     private static final long serialVersionUID = 1L;
     private TupleDesc td;
     private RecordId rid;
@@ -28,6 +27,8 @@ public class Tuple implements Serializable {
         this.td = td;
         rid = null;
         fields = new ArrayList<Field>(td.numFields());
+        // fields must be filled with numFields() elements,
+        // so we can use fields.insert(index, element) later.
         for (int i = 0; i < td.numFields(); i++) {
             fields.add(null);
         }
@@ -66,9 +67,10 @@ public class Tuple implements Serializable {
      * @param f
      *            new value for the field.
      */
-    public void setField(int i, Field f) {
-        if (!td.getFieldType(i).equals(f.getType())) {
-            throw new RuntimeException();
+    public void setField(int i, Field f) { 
+        // See https://piazza.com/class/hhrd9gio9n21s5?cid=90
+        if (f == null || td.getFieldType(i) != f.getType()) {
+            throw new RuntimeException("Invalid field types.");
         }
         fields.set(i, f);
     }
