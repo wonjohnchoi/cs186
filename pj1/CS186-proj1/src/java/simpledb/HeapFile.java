@@ -138,13 +138,12 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(final TransactionId tid) {
         return new DbFileIterator() {
-            BufferPool bp;
+            BufferPool bp = Database.getBufferPool();
             int pageNumber;
             Iterator<Tuple> pageIt;
 
             public void open()
                 throws DbException, TransactionAbortedException {
-                bp = new BufferPool(numPages());
                 pageIt = null;
                 pageNumber = 0;
                 
@@ -177,7 +176,6 @@ public class HeapFile implements DbFile {
             }
             
             public void close() {
-                bp = null;
                 pageNumber = 0;
                 pageIt = null;
             }

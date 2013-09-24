@@ -52,12 +52,13 @@ public class BufferPool {
         throws TransactionAbortedException, DbException {
         // TODO(wonjohn): Should we ignore tid and perm?
         // No, see https://piazza.com/class/hhrd9gio9n21s5?cid=70
-
+        // System.out.println("total: "+pid);
         if (!pidToPage.containsKey(pid)) {
             // If new page is requested and BufferPool is full, throw exception.
             if (pidToPage.size() == numPages) {
                 throw new DbException("BufferPool is full and we don't have an eviction policy.");
             }
+            //System.out.println("unique: " + pid);
             
             // Fetch page.
             // TODO(wonjohn): I follow approach in https://piazza.com/class/hhrd9gio9n21s5?cid=70
