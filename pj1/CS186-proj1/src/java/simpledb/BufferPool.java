@@ -51,34 +51,22 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // TODO(wonjohn): Should we ignore tid and perm?
-        // No, see https://piazza.com/class/hhrd9gio9n21s5?cid=70
-        // System.out.println("total: "+pid);
-        if (!pidToPage.containsKey(pid)) {
+        // For now, yes; see https://piazza.com/class/hhrd9gio9n21s5?cid=70
+
+        // Check if we have cached page.
+         if (!pidToPage.containsKey(pid)) {
             // If new page is requested and BufferPool is full, throw exception.
             if (pidToPage.size() == numPages) {
                 throw new DbException("BufferPool is full and we don't have an eviction policy.");
             }
-            //System.out.println("unique: " + pid);
             
             // Fetch page.
-            // TODO(wonjohn): I follow approach in https://piazza.com/class/hhrd9gio9n21s5?cid=70
-            // but I think this may not be the most efficient approach.
             Page page = null;
             try {
                 page = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
             } catch (IllegalArgumentException ex) {
 
             }
-            /* // The following is inefficent.
-            Iterator<Integer> tableIdIterator = Database.getCatalog().tableIdIterator();
-            while (tableIdIterator.hasNext() && page == null) {
-                int tableId = tableIdIterator.next();
-                try {
-                    page = Database.getCatalog().getDbFile(tableId).readPage(pid);
-                } catch (IllegalArgumentException ex) {}
-            }
-            */
-            // TODO(wonjohn): find out what we should do when page == null (not found).
             pidToPage.put(pid, page);
         }
         return pidToPage.get(pid);
