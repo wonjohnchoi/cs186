@@ -7,9 +7,14 @@ import java.util.*;
  * TupleDesc describes the schema of a tuple.
  */
 public class TupleDesc implements Serializable {
+    // A list of TDItem's
     private ArrayList<TDItem> fields;
+    // This maps each field name to the first index where the field name matches.
+    // This is useful in getFieldName function.
     private HashMap<String, Integer> fieldNamesToIndex;
+    // The size of tuple description is computed only once.
     private int tupleDescSize;
+    // The size of hashcode is computed only once.
     private int hashcode;
 
     /**
@@ -65,6 +70,16 @@ public class TupleDesc implements Serializable {
         init(typeAr, fieldAr);
     }
 
+    /**
+     * Helper method called in the constructor.
+     * 
+     * @param typeAr
+     *            array specifying the number of and types of fields in this
+     *            TupleDesc. It must contain at least one entry.
+     * @param fieldAr
+     *            array specifying the names of the fields. Note that names may
+     *            be null.
+     */
     private void init(Type[] typeAr, String[] fieldAr) {
         fields = new ArrayList<TDItem>(typeAr.length);
         fieldNamesToIndex = new HashMap<String, Integer>();
@@ -77,9 +92,11 @@ public class TupleDesc implements Serializable {
         }
 
         // Compute tupleDescSize for getSize method.
+        int size = 0;
         for (int i = 0; i < fields.size(); i++) {
-            tupleDescSize += fields.get(i).fieldType.getLen();
+            size += fields.get(i).fieldType.getLen();
         }
+        tupleDescSize = size;
 
         // Compute hashcode for hashcode method.
         // TODO(wonjohn): consider improving hashing method using fieldNames.
@@ -105,8 +122,8 @@ public class TupleDesc implements Serializable {
      *            TupleDesc. It must contain at least one entry.
      */
     public TupleDesc(Type[] typeAr) {
-        // TODO: anonymous/unamed field?
         String[] fieldAr = new String[typeAr.length];
+        // See https://piazza.com/class/hhrd9gio9n21s5?cid=80
         Arrays.fill(fieldAr, "");
         init(typeAr, fieldAr);
     }
@@ -161,7 +178,6 @@ public class TupleDesc implements Serializable {
      *             if no field with a matching name is found.
      */
     public int fieldNameToIndex(String name) throws NoSuchElementException {
-        // name == null must throw the exception.
         // See https://piazza.com/class/hhrd9gio9n21s5?cid=67
         if (name == null || !fieldNamesToIndex.containsKey(name)) {
             throw new NoSuchElementException();
@@ -194,13 +210,13 @@ public class TupleDesc implements Serializable {
 
         for (int i = 0; i < newLen; i++) {
             if (i < td1.numFields()) {
-            fieldTypes[i] = td1.getFieldType(i);
-            fieldNames[i] = td1.getFieldName(i);
+                fieldTypes[i] = td1.getFieldType(i);
+                fieldNames[i] = td1.getFieldName(i);
             } else {
-            fieldTypes[i] = td2.getFieldType(i - td1.numFields());
-            fieldNames[i] = td2.getFieldName(i - td1.numFields());
+                fieldTypes[i] = td2.getFieldType(i - td1.numFields());
+                fieldNames[i] = td2.getFieldName(i - td1.numFields());
             }
-        }    
+        }
         return new TupleDesc(fieldTypes, fieldNames);
     }
 
