@@ -23,9 +23,12 @@ public class HeapFile implements DbFile {
      *            file.
      */
     
-    ArrayList<PageId> pids = new ArrayList<PageId>();
     File file;
+
+    // We compute table id only once.
     int id;
+
+    // We fetch tuple description only once.
     TupleDesc td;
     RandomAccessFile raf;
     /*
@@ -37,14 +40,19 @@ public class HeapFile implements DbFile {
     public HeapFile(File f, TupleDesc td) {
         file = f;
         this.td = td;
-        // This is recommended by getId function's comment.
+
+        // This table id is recommended by getId function's comment.
+        // TODO(wonjohn): in future, we may need to deal with a case
+        // in which this hashcode is not unique.
         id = f.getAbsoluteFile().hashCode();
+
         try {
             raf = new RandomAccessFile(file, "rw");
         } catch (FileNotFoundException ex) {
+            // See https://piazza.com/class/hhrd9gio9n21s5?cid=202
+            // This will never happen.
             ex.printStackTrace();
             System.exit(1);
-            // TODO(wonjohn): find out what to do here.
         }
     }
 
@@ -81,7 +89,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-        byte[] data = new byte[BufferPool.PAGE_SIZE * 8];
+        byte[] data = new byte[BufferPool.PAGE_SIZE];
         try {
             raf.seek(pid.pageNumber() * BufferPool.PAGE_SIZE);
             raf.read(data);
@@ -92,7 +100,8 @@ public class HeapFile implements DbFile {
         } catch (IOException ex) {
             ex.printStackTrace();
             System.exit(1);
-            // TODO(wonjohn): find out what to do here.
+            // Never happens.
+            // See https://piazza.com/class/hhrd9gio9n21s5?cid=202.
         }
         return null;
     }
@@ -100,14 +109,14 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
         try {
-            raf.seek(page.getId().pageNumber() * BufferPool.PAGE_SIZE * 8);
+            raf.seek(page.getId().pageNumber() * BufferPool.PAGE_SIZE);
             raf.write(page.getPageData());
         } catch (IOException ex) {
             ex.printStackTrace();
             System.exit(1);
-            // TODO(wonjohn): find out what to do here.
+            // Never happens.
+            // See https://piazza.com/class/hhrd9gio9n21s5?cid=202.
         }
-        pids.add(page.getId());
     }
 
     /**
@@ -138,17 +147,26 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(final TransactionId tid) {
         return new DbFileIterator() {
+            // Get global bufferPool.
             BufferPool bp = Database.getBufferPool();
             int pageNumber;
             Iterator<Tuple> pageIt;
 
             public void open()
                 throws DbException, TransactionAbortedException {
+                // The iterator of the current page
                 pageIt = null;
+                // The current page's number
                 pageNumber = 0;
                 
+                // To make check in hasNext easier,
+                // we do our best to make page iterator (pageIt)
+                // non-null.
                 if (pageNumber < numPages()) {
-                    pageIt = ((HeapPage)bp.getPage(tid, new HeapPageId(id, pageNumber), null)).iterator();
+                    pageIt = ((HeapPage)bp.getPage(
+                        tid,
+                        new HeapPageId(id, pageNumber),
+                        null)).iterator();
                     pageNumber += 1;
                 }
             }
@@ -157,6 +175,7 @@ public class HeapFile implements DbFile {
                 if (pageIt == null) {
                     return false;
                 }
+                
                 while (!pageIt.hasNext() && pageNumber < numPages()) {
                     pageIt = ((HeapPage)bp.getPage(tid, new HeapPageId(id, pageNumber), null)).iterator();
                     pageNumber += 1;
