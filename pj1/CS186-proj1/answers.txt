@@ -1,4 +1,4 @@
-Wonjohn Choi (cs186-de)
+BWonjohn Choi (cs186-de)
 Jisoo Kim
 
 1. In BufferPool, we decided to use HashMap to record mappings between PageId and Page, so we could find out whether a PageId is cached in a (nearly) constant time and could avoid fetching the same PageId twice.
@@ -7,7 +7,10 @@ Jisoo Kim
 
 3. We did not miss any elements except ones commented with "not necessary for project1/lab1." 
 
-4. Wonjohn mainly worked on implementation and debugging of TupleDesc, Tuple, BufferPool, HeapFile, SeqScan.
+4.
+Wonjohn and Jisso both worked on implementation of TupleDesc.
+
+Wonjohn mainly worked on implementation and debugging of TupleDesc, Tuple, BufferPool, HeapFile, SeqScan.
 
 Jisso mainly worked on implementation and debugging of Catalog, HeapPageId, RecordID, HeapPage.
 
