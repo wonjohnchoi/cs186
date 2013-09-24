@@ -308,7 +308,7 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         return new Iterator<Tuple>() {
-            private ArrayList<Tuple> arrayToList(Tuple[] arr) {
+            private ArrayList<Tuple> arrayToList(Tuple[] arr) {    // putting tuples in valid slots in a list
                 ArrayList<Tuple> list = new ArrayList<Tuple>();
                 int i = 0;
                 for (; i < tuples.length; i++) {

@@ -26,9 +26,9 @@ public class Catalog {
     private ArrayList<Integer> idList;
     
     public Catalog() {
-	nameTable = new HashMap<String, Table>();
-	idTable = new HashMap<Integer, Table>();
-	idList = new ArrayList<Integer>();
+        nameTable = new HashMap<String, Table>();
+        idTable = new HashMap<Integer, Table>();
+        idList = new ArrayList<Integer>();
     }
 
     /**
@@ -68,11 +68,11 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         Table table = nameTable.get(name);
-	if (table != null) {
-	    return table.getTableId();
-	} else {
-	    throw new NoSuchElementException();
-	}
+        if (table != null) {
+            return table.getTableId();
+        } else {
+            throw new NoSuchElementException();
+        }
     }
 
     /**
@@ -82,12 +82,12 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-	Table table = idTable.get(tableid);
-	if (table != null) {
-	    return table.getTupleDesc();
-	} else {
-	    throw new NoSuchElementException();
-	}
+        Table table = idTable.get(tableid);
+        if (table != null) {
+            return table.getTupleDesc();
+        } else {
+            throw new NoSuchElementException();
+        }
     }
 
     /**
@@ -97,41 +97,43 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
-	Table table = idTable.get(tableid);
-	if (table != null) {
-	    return table.getDbFile();
-	} else {
-	    throw new NoSuchElementException();
-	}
+        Table table = idTable.get(tableid);
+        if (table != null) {
+            return table.getDbFile();
+        } else {
+            throw new NoSuchElementException();
+        }
     }
 
+    // Returns null if it can't find the primary key associated with the given table id.
     public String getPrimaryKey(int tableid) {
-	Table table = idTable.get(tableid);
-	if (table != null) {
-	    return table.getPrimaryKey();
-	} else {
-	    return null;
-	}
+        Table table = idTable.get(tableid);
+        if (table != null) {
+            return table.getPrimaryKey();
+        } else {
+            return null;
+        }
     }
 
     public Iterator<Integer> tableIdIterator() {
-	return idList.iterator();	    
+        return idList.iterator();	    
     }
 
+    // Returns null if it can't find the name associate with the given table id.
     public String getTableName(int tableid) {
-	Table table = idTable.get(tableid);
-	if (table != null) {
-	    return table.getName();
-	} else {
-	    return null;
-	}
+        Table table = idTable.get(tableid);
+        if (table != null) {
+            return table.getName();
+        } else {
+            return null;
+        }
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-	idTable.clear();
-	nameTable.clear();
-	idList.clear();
+        idTable.clear();
+        nameTable.clear();
+        idList.clear();
     }
     
     /**

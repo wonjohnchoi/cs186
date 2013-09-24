@@ -50,11 +50,11 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        boolean cond = false;
-        if (o instanceof HeapPageId) {
-            cond = ((HeapPageId)o).getTableId() == tableId && ((HeapPageId)o).pageNumber() == pgNo;
+        if (!(o instanceof HeapPageId)) {
+            return false;
+        } else {
+            return ((HeapPageId)o).getTableId() == tableId && ((HeapPageId)o).pageNumber() == pgNo;
         }
-        return cond;
     }
 
     /**
