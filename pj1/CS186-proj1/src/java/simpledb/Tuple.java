@@ -67,6 +67,9 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
+        if (!td.getFieldType(i).equals(f.getType())) {
+            throw new RuntimeException();
+        }
         fields.set(i, f);
     }
 
