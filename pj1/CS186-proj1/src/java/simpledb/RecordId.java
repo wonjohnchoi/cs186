@@ -64,10 +64,8 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-        // Sum of the hash code of tuple number and page id. 
-        // Used tuple number hashCode modulo (integer max value - pageId hashCode) to prevent the overflow.
-        Integer tupNo = new Integer(tupleNo);
-        return (tupNo.hashCode() % (Integer.MAX_VALUE - pageId.hashCode())) + pageId.hashCode();
+        long hashcode = tupleNo * 257 + pageId.hashCode();
+        return (int) (hashcode % Integer.MAX_VALUE);
     }
 
 }
