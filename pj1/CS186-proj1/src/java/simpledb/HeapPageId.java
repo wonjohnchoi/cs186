@@ -71,10 +71,4 @@ public class HeapPageId implements PageId {
 
         return data;
     }
-
-    // defined for debugging purpose
-    // dont remove2 to not alter the spec.
-    public String toString2() {
-        return String.format("(%s,%s)", getTableId(), pageNumber());
-    }
 }
