@@ -75,7 +75,7 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        return (int)Math.ceil((float)numSlots / 8);
+        return (int) Math.ceil((float) numSlots / 8);
     }
     
     /** Return a view of this page before it was modified
@@ -218,8 +218,7 @@ public class HeapPage implements Page {
      * @return The returned ByteArray.
      */
     public static byte[] createEmptyPageData() {
-        int len = BufferPool.PAGE_SIZE;
-        return new byte[len]; //all 0
+        return new byte[BufferPool.PAGE_SIZE]; // all 0
     }
 
     /**
@@ -252,7 +251,7 @@ public class HeapPage implements Page {
      */
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
-    // not necessary for lab1
+        // not necessary for lab1
     }
 
     /**
@@ -260,7 +259,7 @@ public class HeapPage implements Page {
      */
     public TransactionId isDirty() {
         // some code goes here
-    // Not necessary for lab1
+        // Not necessary for lab1
         return null;      
     }
 
@@ -268,13 +267,12 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        // not sure if unvalid means empty. 
-        // treating unvalid slots as emplty slots
+        // not sure if invalid means empty. 
+        // treating invalid slots as emplty slots
         int count = 0;
         for (int i = 0; i < header.length; i++) {
-            int b = (new Byte(header[i])).intValue();
             for (int j = 7; j >= 0; j--) {
-                int bit = b >> j;
+                int bit = ((int) header[i]) >> j;
                 bit = bit & 1;
                 if (bit == 0) {
                     count++;
@@ -288,7 +286,7 @@ public class HeapPage implements Page {
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        int b = new Byte(header[(int) (i / 8)]).intValue();
+        int b = header[(int) (i / 8)];
         int offset = i % 8;
 
         return ((b >> offset) & 1) == 1;
