@@ -15,7 +15,7 @@ public class SeqScan implements DbIterator {
     private String tableAlias;
     private DbFileIterator dbFileIterator;
     private boolean open = false;
-    private TupleDesc td;
+    // the tuple desc prefixed with table alias
     private TupleDesc td_prefixed;
 
     /**
@@ -35,7 +35,6 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // TODO(wonjohn): What happens if tableid is invalid? 
         this.tid = tid;
         this.tableid = tableid;
         this.tableAlias = tableAlias;
@@ -73,7 +72,9 @@ public class SeqScan implements DbIterator {
     public void reset(int tableid, String tableAlias) {
         this.tableid = tableid;
         this.tableAlias = tableAlias;
-        // reset tableName??
+        this.dbFileIterator = null;
+        // TODO(wonjohn): find out whether to update tuple desc with new tablealias.
+        // Yes, we do. See https://piazza.com/class/hhrd9gio9n21s5?cid=79
         update_td(tableid, tableAlias);
         close();
     }
@@ -88,14 +89,16 @@ public class SeqScan implements DbIterator {
         }
         dbFileIterator = Database.getCatalog().getDbFile(tableid).iterator(tid);
         dbFileIterator.open();
-        
         open = true;
     }
 
 
+    /**
+     * Update tuple desc by fetching new one using table_id
+     * and prefixing its field names with tableAlias.
+     */
     private void update_td(int table_id, String tableAlias) {        
-        // should this be updated for reset? we will do for now.
-        this.td = Database.getCatalog().getDbFile(tableid).getTupleDesc();
+        TupleDesc td = Database.getCatalog().getDbFile(tableid).getTupleDesc();
         Type[] typeAr = new Type[td.numFields()];
         String[] fieldAr = new String[td.numFields()];
         Iterator<TupleDesc.TDItem> it = td.iterator();
@@ -106,7 +109,7 @@ public class SeqScan implements DbIterator {
             fieldAr[i] = tableAlias + "." + item.fieldName;
             i += 1;
         }
-        this.td = new TupleDesc(typeAr, fieldAr);
+        this.td_prefixed = new TupleDesc(typeAr, fieldAr);
     }
 
     /**
@@ -119,7 +122,7 @@ public class SeqScan implements DbIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        return td;
+        return td_prefixed;
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
