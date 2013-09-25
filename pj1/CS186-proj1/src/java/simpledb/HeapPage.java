@@ -306,23 +306,15 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         return new Iterator<Tuple>() {
-            private ArrayList<Tuple> arrayToList(Tuple[] arr) {    // putting tuples in valid slots in a list
-                ArrayList<Tuple> list = new ArrayList<Tuple>();
-                int i = 0;
-                for (; i < tuples.length; i++) {
-                    if (isSlotUsed(i)) {
-                        list.add(arr[i]);
-                    }
-                }
-                return list;
-            }
             int i = 0;
-            ArrayList<Tuple> lst = arrayToList(tuples);
             public boolean hasNext() {
-                return i < lst.size();
+                while (i < tuples.length && !isSlotUsed(i)) {
+                    i += 1;
+                }
+                return i < tuples.length;
             }
             public Tuple next() {
-                return lst.get(i++);
+                return tuples[i++];
             }
             public void remove() {
                 throw new UnsupportedOperationException();
