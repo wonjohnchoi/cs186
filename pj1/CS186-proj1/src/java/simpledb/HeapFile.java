@@ -24,18 +24,11 @@ public class HeapFile implements DbFile {
      */
     
     File file;
-
     // We compute table id only once.
     int id;
-
     // We fetch tuple description only once.
     TupleDesc td;
     RandomAccessFile raf;
-    /*
-    byte header[];
-    HeapPage pages[];
-    int numSlots;
-    */
     
     public HeapFile(File f, TupleDesc td) {
         file = f;
@@ -89,9 +82,15 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
+        // if the end of file is reached,
+        // data may not fully be filled but it is ok
+        // because padding with zero (default of byte array)
+        // is ok according to GSI.
         byte[] data = new byte[BufferPool.PAGE_SIZE];
+
         try {
             raf.seek(pid.pageNumber() * BufferPool.PAGE_SIZE);
+            // Read *up to* BufferPool.PAGE_SIZE.
             raf.read(data);
 
             // Casting is possible due to
@@ -102,8 +101,8 @@ public class HeapFile implements DbFile {
             System.exit(1);
             // Never happens.
             // See https://piazza.com/class/hhrd9gio9n21s5?cid=202.
+            return null;
         }
-        return null;
     }
 
     // see DbFile.java for javadocs
@@ -123,9 +122,10 @@ public class HeapFile implements DbFile {
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        long size = file.length();
-        // TODO(wonjohn): fix this.
-        return (int)(size / BufferPool.PAGE_SIZE);
+        // TODO(wonjohn): what if file length is not divisible
+        // by BufferPool.PAGE_SIZE?
+        // See https://piazza.com/class/hhrd9gio9n21s5?cid=85
+        return (int) Math.ceil((float) file.length() / BufferPool.PAGE_SIZE);
     }
 
     // see DbFile.java for javadocs
