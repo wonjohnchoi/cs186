@@ -217,7 +217,7 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-        //Not necessary for projects 1--3
+        //Not necessary for projs 1--3
 
         // some code goes here
         //Replace the following
@@ -337,6 +337,7 @@ public class JoinOptimizer {
                 // subtree is
                 t2card = bestCard;
                 rightPkey = hasPkey(prevBest);
+
                 t1cost = stats.get(table1Name).estimateScanCost();
                 t1card = stats.get(table1Name).estimateTableCardinality(
                         filterSelectivities.get(j.t1Alias));

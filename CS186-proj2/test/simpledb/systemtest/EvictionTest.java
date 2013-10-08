@@ -26,8 +26,7 @@ public class EvictionTest extends SimpleDbTestBase {
         System.out.println("EvictionTest scanning large table");
         Database.resetBufferPool(BUFFER_PAGES);
         long beginMem = SystemTestUtil.getMemoryFootprint();
-        TransactionId tid = new TransactionId();
-        SeqScan scan = new SeqScan(tid, f.getId(), "");
+        SeqScan scan = new SeqScan(null, f.getId(), "");
         scan.open();
         while (scan.hasNext()) {
             scan.next();
