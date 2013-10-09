@@ -101,6 +101,9 @@ public class Predicate implements Serializable {
      */
     public boolean filter(Tuple t) {
         // TODO(wonjohn): should we negate this?
+        if (t == null) {
+            return false;
+        }
         return t.getField(field).compare(op, operand);
     }
 
