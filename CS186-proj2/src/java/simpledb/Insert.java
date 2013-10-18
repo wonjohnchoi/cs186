@@ -79,7 +79,7 @@ public class Insert extends Operator {
         }
 
         Tuple numInsertedTuple = new Tuple(new TupleDesc(new Type[]{Type.INT_TYPE}));
-        numInsertedTuple.setField(numInserted, new IntField(1));
+        numInsertedTuple.setField(0, new IntField(numInserted));
 
         return numInsertedTuple;
     }
