@@ -86,12 +86,11 @@ public class Insert extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[] {child};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        child = children[0];
     }
 }
