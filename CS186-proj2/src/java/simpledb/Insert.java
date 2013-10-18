@@ -22,9 +22,9 @@ public class Insert extends Operator {
      *             if TupleDesc of child differs from table into which we are to
      *             insert.
      */
-    TransactionId t;
-    DbIterator child;
-    int tableid;
+    private TransactionId t;
+    private DbIterator child;
+    private int tableid;
  
     public Insert(TransactionId t,DbIterator child, int tableid)
             throws DbException {
