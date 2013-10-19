@@ -29,6 +29,7 @@ public class HeapFile implements DbFile {
     // We fetch tuple description only once.
     TupleDesc td;
     RandomAccessFile raf;
+    HashMap<Integer, Boolean> freePages; // keeps track of the free pages
     
     public HeapFile(File f, TupleDesc td) {
         file = f;
@@ -41,6 +42,10 @@ public class HeapFile implements DbFile {
 
         try {
             raf = new RandomAccessFile(file, "rw");
+            freePages = new HashMap<Integer, Boolean>();
+            for (int i = 0; i < numPages(); i++) { // when the file is initialized, all of its pages are free
+                freePages.put(i, true);
+            } 
         } catch (FileNotFoundException ex) {
             // See https://piazza.com/class/hhrd9gio9n21s5?cid=202
             // This will never happen.
@@ -108,6 +113,11 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
         try {
+            if (((HeapPage)page).getNumEmptySlots() > 0) { // update the page availability
+                freePages.put(page.getId().pageNumber(), true);
+            } else {
+                freePages.put(page.getId().pageNumber(), false);
+            }
             raf.seek(page.getId().pageNumber() * BufferPool.PAGE_SIZE);
             raf.write(page.getPageData());
         } catch (IOException ex) {
@@ -131,17 +141,41 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for proj1
+        ArrayList<Page> modPages = new ArrayList<Page>();
+        HeapPage freePage = null;
+        // get the free page
+        for (int i = 0; i < numPages(); i++) {
+            if (freePages.get(i)) {
+                HeapPageId pid = new HeapPageId(this.getId(), i);
+                freePage = (HeapPage)Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+                break;
+            }
+        }
+        if (freePage != null && freePage.getNumEmptySlots() > 0) {
+            freePage.insertTuple(t);
+            freePage.markDirty(true, tid);
+            if (freePage.getNumEmptySlots() > 0) {
+                freePages.put(freePage.getId().pageNumber(), true);
+            } else {
+                freePages.put(freePage.getId().pageNumber(), false);
+            }
+            modPages.add(freePage);
+        } else {
+            throw new DbException("no free page!");
+        }
+        return modPages;
     }
 
     // see DbFile.java for javadocs
     public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for proj1
+        RecordId rid = t.getRecordId();
+        HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, rid.getPageId(), Permissions.READ_WRITE);
+        page.deleteTuple(t);
+        page.markDirty(true, tid);
+        // mark the page as free
+        freePages.put(page.getId().pageNumber(), true);
+        return page;
     }
 
     // see DbFile.java for javadocs
