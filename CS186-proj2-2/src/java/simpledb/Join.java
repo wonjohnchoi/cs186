@@ -9,10 +9,11 @@ public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
 
-
-    JoinPredicate p;
-    DbIterator child1;
-    DbIterator child2;
+    private JoinPredicate p;
+    private DbIterator child1;
+    private DbIterator child2;
+    private List<Tuple> index2;
+    private int i2;
 
     /**
      * Constructor. Accepts to children to join and the predicate to join them
@@ -29,6 +30,19 @@ public class Join extends Operator {
         this.p  = p;
         this.child1 = child1;
         this.child2 = child2;
+        try {
+            child2.open();
+            index2 = new ArrayList<Tuple>();
+            while (child2.hasNext()) {
+                index2.add(child2.next());
+            }
+            System.out.println("Size of index: "+index2.size());
+            child2.close();
+        } catch (Exception ex) { /* fine to use Exception because this should never happen. */
+            ex.printStackTrace();
+            System.exit(1);
+        }
+        i2 = 0;
     }
 
     public JoinPredicate getJoinPredicate() {
@@ -102,16 +116,31 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
+        if (i2 == index2.size()) {
+            next1 = null;
+            i2 = 0;
+
+        }
         if (next1 == null && !child1.hasNext()) return null;
         if (next1 == null) next1 = child1.next();
         Tuple next2 = null;
-        
+
+        for (int i = i2; i2 < index2.size(); i2++) {
+            if (p.filter(next1, index2.get(i2))) {
+                next2 = index2.get(i2);
+                i2 += 1;
+                break;
+            }
+        }
+
+        /*
         while (true) {
             if (p.filter(next1, next2) || !child2.hasNext()) break;
             next2 = child2.next();
-        }
+            System.out.println(next2);
+            }*/
 
-        if (p.filter(next1, next2)) {
+        if (next2 != null) {
             Tuple next = new Tuple(getTupleDesc());
             int i = 0;
             for (Iterator<Field> fields = next1.fields(); fields.hasNext();) {
@@ -122,8 +151,6 @@ public class Join extends Operator {
             }
             return next;
         } else {
-            next1 = null;
-            child2.rewind();
             return fetchNext();
         }
     }
