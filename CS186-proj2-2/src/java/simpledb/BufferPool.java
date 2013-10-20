@@ -71,21 +71,27 @@ public class BufferPool {
 
         // Check if we have cached page.
          if (!pidToPage.containsKey(pid)) {
-             // If new page is requested and BufferPool is full, evict a page.
-             if (pidToPage.size() == numPages) {
-                 evictPage();
-             }
-             // Fetch page.
-             Page page = null;
-             try {
-                 page = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-             } catch (IllegalArgumentException ex) {
-                 
-             }
-             pidToPage.put(pid, page);
-             timeToPid.put(System.currentTimeMillis(), pid);
-         }
-         return pidToPage.get(pid);
+            // If new page is requested and BufferPool is full, throw exception.
+            if (pidToPage.size() == numPages) {
+                throw new DbException("BufferPool is full and we don't have an eviction policy.");
+            }
+            
+            // Fetch page.
+            HeapPage page = null;
+            try {
+                page = (HeapPage)Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+            } catch (IllegalArgumentException ex) {
+		try {
+		    // allocating a new page
+		    page = new HeapPage((HeapPageId)pid, HeapPage.createEmptyPageData());
+		    //Database.getCatalog().getDbFile(pid.getTableId()).writePage(page);
+		} catch (IOException ex2) {
+		}
+            }
+            pidToPage.put(pid, page);
+            timeToPid.put(System.currentTimeMillis(), pid);
+        }
+        return pidToPage.get(pid);
     }
 
     /**
