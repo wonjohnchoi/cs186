@@ -219,7 +219,7 @@ public class TestUtil {
             throw new RuntimeException("not implemented");
         }
 
-        public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t)
+        public Page deleteTuple(TransactionId tid, Tuple t)
             throws DbException, TransactionAbortedException {
             throw new RuntimeException("not implemented");
         }

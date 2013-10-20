@@ -229,14 +229,16 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         Map.Entry<Long, PageId> timeAndPid = timeToPid.pollFirstEntry();
         PageId pid = timeAndPid.getValue();
-        if (pidToPage.remove(pid) == null) {
-            System.out.println("There is an error in BufferPool.");
-            System.exit(1);
-        }
+        // flush before removing pid from pidToPage because flush uses pid.
         try {
             flushPage(pid);
         } catch (IOException ex) {
             ex.printStackTrace();
+            System.exit(1);
+        }
+
+        if (pidToPage.remove(pid) == null) {
+            System.out.println("There is an error in BufferPool.");
             System.exit(1);
         }
     }
