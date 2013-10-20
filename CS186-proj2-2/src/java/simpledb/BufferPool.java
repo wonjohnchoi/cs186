@@ -71,22 +71,21 @@ public class BufferPool {
 
         // Check if we have cached page.
          if (!pidToPage.containsKey(pid)) {
-            // If new page is requested and BufferPool is full, throw exception.
-            if (pidToPage.size() == numPages) {
-                throw new DbException("BufferPool is full and we don't have an eviction policy.");
-            }
-            
-            // Fetch page.
-            Page page = null;
-            try {
-                page = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-            } catch (IllegalArgumentException ex) {
-
-            }
-            pidToPage.put(pid, page);
-            timeToPid.put(System.currentTimeMillis(), pid);
-        }
-        return pidToPage.get(pid);
+             // If new page is requested and BufferPool is full, evict a page.
+             if (pidToPage.size() == numPages) {
+                 evictPage();
+             }
+             // Fetch page.
+             Page page = null;
+             try {
+                 page = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+             } catch (IllegalArgumentException ex) {
+                 
+             }
+             pidToPage.put(pid, page);
+             timeToPid.put(System.currentTimeMillis(), pid);
+         }
+         return pidToPage.get(pid);
     }
 
     /**
@@ -224,14 +223,16 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         Map.Entry<Long, PageId> timeAndPid = timeToPid.pollFirstEntry();
         PageId pid = timeAndPid.getValue();
-        if (pidToPage.remove(pid) == null) {
-            System.out.println("There is an error in BufferPool.");
-            System.exit(1);
-        }
+        // flush before removing pid from pidToPage because flush uses pid.
         try {
             flushPage(pid);
         } catch (IOException ex) {
             ex.printStackTrace();
+            System.exit(1);
+        }
+
+        if (pidToPage.remove(pid) == null) {
+            System.out.println("There is an error in BufferPool.");
             System.exit(1);
         }
     }
