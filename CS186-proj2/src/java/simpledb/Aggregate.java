@@ -103,6 +103,7 @@ public class Aggregate extends Operator {
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
+	super.open();
         // aggregate first
         child.open();
         while (child.hasNext()) {
@@ -110,7 +111,7 @@ public class Aggregate extends Operator {
             agg.mergeTupleIntoGroup(tuple);
         }
         output = agg.iterator();
-        // then open
+        // then open output
         output.open();
     }
 

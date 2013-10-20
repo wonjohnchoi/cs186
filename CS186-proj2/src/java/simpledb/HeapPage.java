@@ -237,7 +237,7 @@ public class HeapPage implements Page {
         if (!pid.equals(this.pid) || !isSlotUsed(slot)) { // if tuple is not on this page or the slot is already empty 
             throw new DbException("tuple cannot be deleted!");
         } else {
-            t.setRecordId(null);
+	    // t.setRecordId(null);
             tuples[slot] = null;
             markSlotUsed(slot, false);
         }
