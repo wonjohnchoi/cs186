@@ -541,6 +541,8 @@ public class Parser {
                                 + curtrans.getId().getId() + " committed.");
                     }
                 } catch (Throwable a) {
+                    a.printStackTrace();
+
                     // Whenever error happens, abort the current transaction
                     if (curtrans != null) {
                         curtrans.abort();
