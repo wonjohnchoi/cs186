@@ -81,12 +81,13 @@ public class BufferPool {
             try {
                 page = (HeapPage)Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
             } catch (IllegalArgumentException ex) {
-		try {
-		    // allocating a new page
-		    page = new HeapPage((HeapPageId)pid, HeapPage.createEmptyPageData());
-		    //Database.getCatalog().getDbFile(pid.getTableId()).writePage(page);
-		} catch (IOException ex2) {
-		}
+                try {
+                // allocating a new page
+                    page = new HeapPage((HeapPageId)pid, HeapPage.createEmptyPageData());
+                    //Database.getCatalog().getDbFile(pid.getTableId()).writePage(page);
+                } catch (IOException ex2) {
+                    
+                }
             }
             pidToPage.put(pid, page);
             timeToPid.put(System.currentTimeMillis(), pid);

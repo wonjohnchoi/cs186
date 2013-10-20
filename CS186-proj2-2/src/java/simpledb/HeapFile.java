@@ -111,8 +111,8 @@ public class HeapFile implements DbFile {
 	    */
 	    throw new IllegalArgumentException();
         } catch (NullPointerException ex) {
-	    throw new IllegalArgumentException();
-	}
+            throw new IllegalArgumentException();
+        }
     }
 
     // see DbFile.java for javadocs
@@ -156,18 +156,18 @@ public class HeapFile implements DbFile {
                 break;
             }
         }
-	if (freePage == null) {
-	    freePage = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()), Permissions.READ_WRITE);
-	}
-	writePage(freePage);
-	freePage.insertTuple(t);
-	freePage.markDirty(true, tid);
-	if (freePage.getNumEmptySlots() > 0) {
-	    freePages.put(freePage.getId().pageNumber(), true);
-	} else {
-	    freePages.put(freePage.getId().pageNumber(), false);
-	}
-	modPages.add(freePage);
+        if (freePage == null) {
+            freePage = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()), Permissions.READ_WRITE);
+            writePage(freePage);
+        }
+        freePage.insertTuple(t);
+        freePage.markDirty(true, tid);
+        if (freePage.getNumEmptySlots() > 0) {
+            freePages.put(freePage.getId().pageNumber(), true);
+        } else {
+            freePages.put(freePage.getId().pageNumber(), false);
+        }
+        modPages.add(freePage);
         return modPages;
     }
 

@@ -251,10 +251,10 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         int slot = -1;
         for (int i = 0; i < 8 * header.length; i++) {
-	    if (!isSlotUsed(i)) {
-		slot = i;
-		break;
-	    }
+            if (!isSlotUsed(i)) {
+                slot = i;
+                break;
+            }
         }
         TupleDesc tupleTD = t.getTupleDesc();
         if (slot == -1 || !tupleTD.equals(td)) { // when the page is full or tupledesc is mismatch
