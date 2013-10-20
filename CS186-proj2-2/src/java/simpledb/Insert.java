@@ -25,16 +25,18 @@ public class Insert extends Operator {
     private TransactionId t;
     private DbIterator child;
     private int tableid;
- 
+    private boolean called;
+
     public Insert(TransactionId t,DbIterator child, int tableid)
             throws DbException {
         this.t = t;
         this.child = child;
         this.tableid = tableid;
+        called = false;
     }
 
     public TupleDesc getTupleDesc() {
-        return child.getTupleDesc();
+        return new TupleDesc(new Type[]{Type.INT_TYPE});
     }
 
     public void open() throws DbException, TransactionAbortedException {
@@ -65,10 +67,11 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        if (!child.hasNext()) return null;
-        Tuple next;
+        if (called) return null;
+        called = true;
         int numInserted = 0;
-        while ((next = child.next()) != null) {
+        while (child.hasNext()) {
+            Tuple next = child.next();
             numInserted += 1;
             try {
                 Database.getBufferPool().insertTuple(t, tableid, next);
@@ -78,7 +81,7 @@ public class Insert extends Operator {
             }
         }
 
-        Tuple numInsertedTuple = new Tuple(new TupleDesc(new Type[]{Type.INT_TYPE}));
+        Tuple numInsertedTuple = new Tuple(getTupleDesc());
         numInsertedTuple.setField(0, new IntField(numInserted));
 
         return numInsertedTuple;
