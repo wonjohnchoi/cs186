@@ -161,7 +161,6 @@ public class HeapFile implements DbFile {
             }
             modPages.add(freePage);
         } else {
-            throw new DbException("no free page!");
         }
         return modPages;
     }

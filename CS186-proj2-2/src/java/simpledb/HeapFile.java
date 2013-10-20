@@ -86,7 +86,7 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public Page readPage(PageId pid) {
+    public Page readPage(PageId pid) throws IllegalArgumentException {
         // if the end of file is reached,
         // data may not fully be filled but it is ok
         // because padding with zero (default of byte array)
@@ -102,12 +102,17 @@ public class HeapFile implements DbFile {
             // https://piazza.com/class/hhrd9gio9n21s5?cid=77
             return new HeapPage((HeapPageId) pid, data);
         } catch (IOException ex) {
+	    /*
             ex.printStackTrace();
             System.exit(1);
             // Never happens.
             // See https://piazza.com/class/hhrd9gio9n21s5?cid=202.
             return null;
-        }
+	    */
+	    throw new IllegalArgumentException();
+        } catch (NullPointerException ex) {
+	    throw new IllegalArgumentException();
+	}
     }
 
     // see DbFile.java for javadocs
@@ -146,35 +151,23 @@ public class HeapFile implements DbFile {
         // get the free page
         for (int i = 0; i < numPages(); i++) {
             if (freePages.get(i)) {
-                HeapPageId pid = new HeapPageId(this.getId(), i);
+                HeapPageId pid = new HeapPageId(getId(), i);
                 freePage = (HeapPage)Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
                 break;
             }
         }
-        if (freePage != null) {
-            freePage.insertTuple(t);
-            freePage.markDirty(true, tid);
-            if (freePage.getNumEmptySlots() > 0) {
-                freePages.put(freePage.getId().pageNumber(), true);
-            } else {
-                freePages.put(freePage.getId().pageNumber(), false);
-            }
-            modPages.add(freePage);
-        } else { // if there's no more free page, create a new page
-            HeapPageId pid = new HeapPageId(id, numPages());
-	    // System.out.println("numPages: " + numPages());
-            HeapPage newPage = new HeapPage(pid, HeapPage.createEmptyPageData());
-	    writePage(newPage);
-	    newPage.insertTuple(t);
-	    newPage.markDirty(true, tid);
-	    if (newPage.getNumEmptySlots() > 0) {
-		freePages.put(pid.pageNumber(), true);
-	    } else {
-		freePages.put(pid.pageNumber(), false);
-	    }
-	    //System.out.println("numPages: " + numPages());
-	    modPages.add(newPage);
-        }
+	if (freePage == null) {
+	    freePage = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()), Permissions.READ_WRITE);
+	}
+	writePage(freePage);
+	freePage.insertTuple(t);
+	freePage.markDirty(true, tid);
+	if (freePage.getNumEmptySlots() > 0) {
+	    freePages.put(freePage.getId().pageNumber(), true);
+	} else {
+	    freePages.put(freePage.getId().pageNumber(), false);
+	}
+	modPages.add(freePage);
         return modPages;
     }
 
@@ -183,9 +176,10 @@ public class HeapFile implements DbFile {
             TransactionAbortedException {
         RecordId rid = t.getRecordId();
         HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, rid.getPageId(), Permissions.READ_WRITE);
+	// delete the tuple from the page
         page.deleteTuple(t);
         page.markDirty(true, tid);
-        // mark the page as free
+	// mark the page as free
         freePages.put(page.getId().pageNumber(), true);
         return page;
     }
