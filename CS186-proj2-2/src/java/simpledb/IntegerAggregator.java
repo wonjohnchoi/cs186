@@ -133,7 +133,7 @@ public class IntegerAggregator implements Aggregator {
      */
     public DbIterator iterator() {
         TupleDesc tupDesc;
-        LinkedList tuples = new LinkedList();
+        LinkedList<Tuple> tuples = new LinkedList<Tuple>();
         Set keys = aggData.keySet();
 
         if (gbfield != Aggregator.NO_GROUPING) {
