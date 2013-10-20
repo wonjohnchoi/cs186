@@ -77,6 +77,7 @@ public class IntegerAggregator implements Aggregator {
                         numTup.put(key, 0);
                         aggVal = 0;
                     } else {
+			aggVal = aggData.get(key);
                     }
                     aggVal += value;    
                     int numKey = numTup.get(key);
@@ -97,7 +98,7 @@ public class IntegerAggregator implements Aggregator {
                 case MIN: 
                     if (!aggData.containsKey(key)) {
                         aggData.put(key, Integer.MAX_VALUE);
-                        aggVal = 0;
+                        aggVal = Integer.MAX_VALUE;
                     } else {
                         aggVal = aggData.get(key);
                     }    
