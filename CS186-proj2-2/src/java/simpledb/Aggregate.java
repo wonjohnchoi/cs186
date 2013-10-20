@@ -28,7 +28,7 @@ public class Aggregate extends Operator {
      * @param child
      *            The DbIterator that is feeding us tuples.
      * @param afield
-     *            The column over which we are computing an aggregate.
+     *  	  The column over which we are computing an aggregate.
      * @param gfield
      *            The column over which we are grouping the result, or -1 if
      *            there is no grouping
@@ -36,7 +36,7 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(DbIterator child, int afield, int gfield, Aggregator.Op aop) {
-	    this.child = child;
+	this.child = child;
         this.afield = afield;
         this.gfield = gfield;
         this.aop = aop;
@@ -59,7 +59,7 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	   return gfield;
+	return gfield;
     }
 
     /**
@@ -68,18 +68,18 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-	   String name = null;
-	   if (gfield != Aggregator.NO_GROUPING) {
+	String name = null;
+	if (gfield != Aggregator.NO_GROUPING) {
             name = ((TupleDesc)output.getTupleDesc()).getFieldName(gfield);
-       }
+       }	
        return name;
-    }
-
+    }	
+    
     /**
      * @return the aggregate field
      * */
     public int aggregateField() {
-	   return afield;
+	return afield;
     }
 
     /**
@@ -94,16 +94,16 @@ public class Aggregate extends Operator {
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	   return aop;
+	return aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
 	return aop.toString();
     }
 
-    public void open() throws NoSuchElementException, DbException,
-	    TransactionAbortedException {
-        // aggregate first
+    public void open() throws NoSuchElementException, DbException, TransactionAbortedException {
+        super.open();
+	// aggregate first
         child.open();
         while (child.hasNext()) {
                 Tuple tuple = child.next();
@@ -122,14 +122,14 @@ public class Aggregate extends Operator {
      * aggregate. Should return null if there are no more tuples.
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	   if (output.hasNext()) {
+	if (output.hasNext()) {
             return output.next();
-       } 
-	   return null;
-    }
+	} 
+	return null;
+    }	
 
     public void rewind() throws DbException, TransactionAbortedException {
-	   output.rewind();
+	output.rewind();
     }
 
     /**
@@ -144,23 +144,23 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-	   return agg.iterator().getTupleDesc();
+	return agg.iterator().getTupleDesc();
     }
 
     public void close() {
-	   output.close();
+	output.close();
     }
 
     @Override
     public DbIterator[] getChildren() {
         DbIterator[] children = new DbIterator[1];
-	    children[0] = child;
+	children[0] = child;
         return children;   
-    }
+    }	
 
     @Override
     public void setChildren(DbIterator[] children) {
-	   child = children[0];
-    }
+	child = children[0];
+    }	
     
-}
+}	
