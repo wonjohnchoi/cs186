@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.io.IOException;
 /**
  * Inserts tuples read from the child operator into the tableid specified in the
  * constructor
@@ -21,26 +22,33 @@ public class Insert extends Operator {
      *             if TupleDesc of child differs from table into which we are to
      *             insert.
      */
+    private TransactionId t;
+    private DbIterator child;
+    private int tableid;
+ 
     public Insert(TransactionId t,DbIterator child, int tableid)
             throws DbException {
-        // some code goes here
+        this.t = t;
+        this.child = child;
+        this.tableid = tableid;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return child.getTupleDesc();
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        super.open();
+        child.open();
     }
 
     public void close() {
-        // some code goes here
+        super.close();
+        child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.rewind();
     }
 
     /**
@@ -57,18 +65,32 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        if (!child.hasNext()) return null;
+        Tuple next;
+        int numInserted = 0;
+        while ((next = child.next()) != null) {
+            numInserted += 1;
+            try {
+                Database.getBufferPool().insertTuple(t, tableid, next);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                System.exit(1);
+            }
+        }
+
+        Tuple numInsertedTuple = new Tuple(new TupleDesc(new Type[]{Type.INT_TYPE}));
+        numInsertedTuple.setField(0, new IntField(numInserted));
+
+        return numInsertedTuple;
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[] {child};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        child = children[0];
     }
 }

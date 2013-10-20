@@ -14,17 +14,6 @@ public class Predicate implements Serializable {
         EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, LIKE, NOT_EQUALS;
 
         /**
-         * Interface to access operations by a string containing an integer
-         * index for command-line convenience.
-         * 
-         * @param s
-         *            a string containing a valid integer Op index
-         */
-        public static Op getOp(String s) {
-            return getOp(Integer.parseInt(s));
-        }
-
-        /**
          * Interface to access operations by integer value for command-line
          * convenience.
          * 
@@ -47,13 +36,19 @@ public class Predicate implements Serializable {
             if (this == GREATER_THAN_OR_EQ)
                 return ">=";
             if (this == LIKE)
-                return "like";
+                return "LIKE";
             if (this == NOT_EQUALS)
                 return "<>";
             throw new IllegalStateException("impossible to reach here");
         }
+
     }
 
+    private int field;
+    private Op op;
+    private Field operand;
+    
+    
     /**
      * Constructor.
      * 
@@ -65,7 +60,9 @@ public class Predicate implements Serializable {
      *            field value to compare passed in tuples to
      */
     public Predicate(int field, Op op, Field operand) {
-        // some code goes here
+        this.field = field;
+        this.op = op;
+        this.operand = operand;
     }
 
     /**
@@ -73,8 +70,7 @@ public class Predicate implements Serializable {
      */
     public int getField()
     {
-        // some code goes here
-        return -1;
+        return field;
     }
 
     /**
@@ -82,8 +78,7 @@ public class Predicate implements Serializable {
      */
     public Op getOp()
     {
-        // some code goes here
-        return null;
+        return op;
     }
     
     /**
@@ -91,8 +86,7 @@ public class Predicate implements Serializable {
      */
     public Field getOperand()
     {
-        // some code goes here
-        return null;
+        return operand;
     }
     
     /**
@@ -106,8 +100,11 @@ public class Predicate implements Serializable {
      * @return true if the comparison is true, false otherwise.
      */
     public boolean filter(Tuple t) {
-        // some code goes here
-        return false;
+        // TODO(wonjohn): should we negate this?
+        if (t == null) {
+            return false;
+        }
+        return t.getField(field).compare(op, operand);
     }
 
     /**
@@ -115,7 +112,6 @@ public class Predicate implements Serializable {
      * operand_string
      */
     public String toString() {
-        // some code goes here
-        return "";
+        return String.format("f = %d op = %s operand = %s", field, op, operand);
     }
 }

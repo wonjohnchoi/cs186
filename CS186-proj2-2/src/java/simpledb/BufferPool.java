@@ -21,7 +21,22 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
     private int numPages;
-    private HashMap<PageId, Page> pidToPage; 
+    private HashMap<PageId, Page> pidToPage;
+    private TreeMap<Long, PageId> timeToPid;
+
+    /*
+    static class PageWithTime implements Comparable<PageWithTime> {
+        Page page;
+        long time;
+        public PageWithTime(Page page, long time) {
+            this.page = page;
+            this.time = time;
+        }
+
+        public int compareTo(PageWithTime pageWithTime) {
+            return time - pageWithTime.time;
+        }
+    }*/
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -31,6 +46,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         this.numPages = numPages;
         pidToPage = new HashMap<PageId, Page>();
+        timeToPid = new TreeMap<Long, PageId>();
     }
 
     /**
@@ -68,6 +84,7 @@ public class BufferPool {
 
             }
             pidToPage.put(pid, page);
+            timeToPid.put(System.currentTimeMillis(), pid);
         }
         return pidToPage.get(pid);
     }
@@ -132,8 +149,8 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for proj1
+            DbFile file = Database.getCatalog().getDbFile(tableId);
+            file.insertTuple(tid, t);
     }
 
     /**
@@ -151,8 +168,9 @@ public class BufferPool {
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for proj1
+            PageId pid = t.getRecordId().getPageId();
+            DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
+            file.deleteTuple(tid, t);
     }
 
     /**
@@ -161,9 +179,9 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for proj1
-
+        for (PageId pid : pidToPage.keySet()) {
+            flushPage(pid);
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -181,8 +199,15 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        Page page = pidToPage.get(pid);
+        TransactionId dirtyTid = page.isDirty();
+        if (dirtyTid != null) {
+            // TODO(wonjohn): what should we use as transaction id?
+            // Currently, it is set to tid that dirtied this page before.
+            page.markDirty(false, dirtyTid);
+            DbFile dbFile = Database.getCatalog().getDbFile(pid.getTableId());
+            dbFile.writePage(page);
+        }        
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -197,8 +222,18 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for proj1
+        Map.Entry<Long, PageId> timeAndPid = timeToPid.pollFirstEntry();
+        PageId pid = timeAndPid.getValue();
+        if (pidToPage.remove(pid) == null) {
+            System.out.println("There is an error in BufferPool.");
+            System.exit(1);
+        }
+        try {
+            flushPage(pid);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.exit(1);
+        }
     }
 
 }

@@ -1,7 +1,6 @@
 package simpledb;
 
 import java.util.*;
-
 /**
  * The Aggregation operator that computes an aggregate (e.g., sum, avg, max,
  * min). Note that we only support aggregates over a single column, grouped by a
@@ -10,6 +9,13 @@ import java.util.*;
 public class Aggregate extends Operator {
 
     private static final long serialVersionUID = 1L;
+    private DbIterator child;
+    private int afield;
+    private int gfield;
+    private Aggregator.Op aop;
+    private Aggregator agg;
+    private DbIterator output;
+
 
     /**
      * Constructor.
@@ -30,7 +36,21 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(DbIterator child, int afield, int gfield, Aggregator.Op aop) {
-	// some code goes here
+	    this.child = child;
+        this.afield = afield;
+        this.gfield = gfield;
+        this.aop = aop;
+        TupleDesc tupDesc = child.getTupleDesc();
+        Type afieldtype = tupDesc.getFieldType(afield);
+        Type gbfieldtype = null;
+        if (gfield != Aggregator.NO_GROUPING) {
+            gbfieldtype = tupDesc.getFieldType(gfield);
+        }
+        if (afieldtype == Type.INT_TYPE) {
+            agg = new IntegerAggregator(gfield, gbfieldtype, afield, aop);
+        } else if (afieldtype == Type.STRING_TYPE) {
+            agg = new StringAggregator(gfield, gbfieldtype, afield, aop);
+        }
     }
 
     /**
@@ -39,8 +59,7 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	// some code goes here
-	return -1;
+	   return gfield;
     }
 
     /**
@@ -49,16 +68,18 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-	// some code goes here
-	return null;
+	   String name = null;
+	   if (gfield != Aggregator.NO_GROUPING) {
+            name = ((TupleDesc)output.getTupleDesc()).getFieldName(gfield);
+       }
+       return name;
     }
 
     /**
      * @return the aggregate field
      * */
     public int aggregateField() {
-	// some code goes here
-	return -1;
+	   return afield;
     }
 
     /**
@@ -66,16 +87,14 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-	// some code goes here
-	return null;
+       return ((TupleDesc)output.getTupleDesc()).getFieldName(afield);
     }
 
     /**
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	// some code goes here
-	return null;
+	   return aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
@@ -84,7 +103,15 @@ public class Aggregate extends Operator {
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	// some code goes here
+        // aggregate first
+        child.open();
+        while (child.hasNext()) {
+                Tuple tuple = child.next();
+                agg.mergeTupleIntoGroup(tuple);
+        }
+        output = agg.iterator();
+        // then open
+        output.open();
     }
 
     /**
@@ -95,12 +122,14 @@ public class Aggregate extends Operator {
      * aggregate. Should return null if there are no more tuples.
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	// some code goes here
-	return null;
+	   if (output.hasNext()) {
+            return output.next();
+       } 
+	   return null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-	// some code goes here
+	   output.rewind();
     }
 
     /**
@@ -115,23 +144,23 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-	// some code goes here
-	return null;
+	   return agg.iterator().getTupleDesc();
     }
 
     public void close() {
-	// some code goes here
+	   output.close();
     }
 
     @Override
     public DbIterator[] getChildren() {
-	// some code goes here
-	return null;
+        DbIterator[] children = new DbIterator[1];
+	    children[0] = child;
+        return children;   
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-	// some code goes here
+	   child = children[0];
     }
     
 }
