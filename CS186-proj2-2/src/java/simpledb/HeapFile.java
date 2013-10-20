@@ -151,7 +151,7 @@ public class HeapFile implements DbFile {
                 break;
             }
         }
-        if (freePage != null && freePage.getNumEmptySlots() > 0) {
+        if (freePage != null) {
             freePage.insertTuple(t);
             freePage.markDirty(true, tid);
             if (freePage.getNumEmptySlots() > 0) {
@@ -160,8 +160,20 @@ public class HeapFile implements DbFile {
                 freePages.put(freePage.getId().pageNumber(), false);
             }
             modPages.add(freePage);
-        } else {
-            throw new DbException("no free page!");
+        } else { // if there's no more free page, create a new page
+            HeapPageId pid = new HeapPageId(id, numPages());
+	    // System.out.println("numPages: " + numPages());
+            HeapPage newPage = new HeapPage(pid, HeapPage.createEmptyPageData());
+	    writePage(newPage);
+	    newPage.insertTuple(t);
+	    newPage.markDirty(true, tid);
+	    if (newPage.getNumEmptySlots() > 0) {
+		freePages.put(pid.pageNumber(), true);
+	    } else {
+		freePages.put(pid.pageNumber(), false);
+	    }
+	    //System.out.println("numPages: " + numPages());
+	    modPages.add(newPage);
         }
         return modPages;
     }
