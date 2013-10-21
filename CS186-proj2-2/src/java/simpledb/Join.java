@@ -30,6 +30,7 @@ public class Join extends Operator {
         this.p = p;
         this.child1 = child1;
         this.child2 = child2;
+        /*
         try {
             int i = 0;
             child1.open();
@@ -41,21 +42,19 @@ public class Join extends Operator {
             child1.close();
 
             child2.open();
-            index2 = new ArrayList<Tuple>();
+            i = 0;
             while (child2.hasNext()) {
-                index2.add(child2.next());
-                if (index2.size() % 10000 == 0) {
-                    System.out.println(index2.size());
-                }
+                i += 1;
+                child2.next();
             }
-            System.out.println("Size of index: "+index2.size());
+            System.out.println("Size of index: " + i);
             child2.close();
-        } catch (Exception ex) { /* fine to use Exception because this should never happen. */
+        } catch (Exception ex) { /* fine to use Exception because this should never happen. 
             ex.printStackTrace();
             System.exit(1);
         }
-        i2 = 0;
-    }
+        i2 = 0;*/
+        }
 
     public JoinPredicate getJoinPredicate() {
         return p;
@@ -128,23 +127,43 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        if (index2.size() == 0) return null;
         while (true) {
-            if (i2 == index2.size()) {
-                next1 = null;
-                i2 = 0;
+            //System.out.println("A");
+            if (next1 == null) {
+                if (child1.hasNext()) {
+                    next1 = child1.next();
+                    child2.rewind();
+                } else {
+                    return null;
+                }
+            } else if (!child2.hasNext()) {
+                child2.rewind();
+                if (child1.hasNext()) {
+                    next1 = child1.next();
+                    child2.rewind();                    
+                } else {
+                    return null;
+                }
             }
-            if (next1 == null && !child1.hasNext()) return null;
-            if (next1 == null) next1 = child1.next();
-            Tuple next2 = null;
 
+            Tuple next2 = null;
+            boolean found = false;
+
+            while (child2.hasNext()) {
+                next2 = child2.next();
+                found = p.filter(next1, next2);
+                //System.out.println(found);
+                if (found) break;
+            }
+
+            /*
             for (int i = i2; i2 < index2.size(); i2++) {
                 if (p.filter(next1, index2.get(i2))) {
                     next2 = index2.get(i2);
                     i2 += 1;
                     break;
                 }
-            }
+                }*/
 
             /*
               while (true) {
@@ -153,7 +172,7 @@ public class Join extends Operator {
               System.out.println(next2);
               }*/
 
-            if (next2 != null) {
+            if (found) {
                 Tuple next = new Tuple(getTupleDesc());
                 int i = 0;
                 for (Iterator<Field> fields = next1.fields(); fields.hasNext();) {
