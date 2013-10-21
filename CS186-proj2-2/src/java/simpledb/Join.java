@@ -27,6 +27,10 @@ public class Join extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
+        System.out.println("child1: "+child1.getTupleDesc());
+        System.out.println("child2: "+child2.getTupleDesc());
+        System.out.println("idx1: "+p.getField1());
+        System.out.println("idx2: "+p.getField2());
         this.p = p;
         this.child1 = child1;
         this.child2 = child2;
@@ -37,6 +41,10 @@ public class Join extends Operator {
             while (child1.hasNext()) {
                 child1.next();
                 i += 1;
+                if (i % 10000 == 0) {
+                    System.out.println(i);
+                }
+
             }
             System.out.println("Size of child1: " + i);
             child1.close();
@@ -46,6 +54,9 @@ public class Join extends Operator {
             while (child2.hasNext()) {
                 i += 1;
                 index2.add(child2.next());
+                if (i % 10000 == 0) {
+                    System.out.println(i);
+                }
             }
             System.out.println("Size of index: " + i);
             child2.close();
