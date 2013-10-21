@@ -11,6 +11,8 @@ public class StringAggregator implements Aggregator {
     private int afield;
     private Op what;
     private HashMap<Integer, Integer> aggData;
+    private String gbfieldName;
+    private String afieldName;
 
     /**
      * Aggregate constructor
@@ -27,6 +29,8 @@ public class StringAggregator implements Aggregator {
         this.afield = afield;
         this.what = what;
         aggData = new HashMap<Integer, Integer>();
+        gbfieldName = "";
+        afieldName = "";
     }
 
     /**
@@ -35,13 +39,17 @@ public class StringAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // COUNT only
-        IntField f = (IntField) tup.getField(gbfield);
-        int key = f.getValue();
-        
+        IntField f = new IntField(Aggregator.NO_GROUPING);
+        int key;
+        if (gbfield != Aggregator.NO_GROUPING) {
+            f = (IntField) tup.getField(gbfield);
+            gbfieldName = tup.getTupleDesc().getFieldName(gbfield);
+        }
+        key = f.getValue();
+        afieldName = tup.getTupleDesc().getFieldName(afield);
         if (!aggData.containsKey(key)) {
                 aggData.put(key, 0);
         }
-        
         int aggVal = aggData.get(key);
         aggVal++;
         aggData.put(key, aggVal);
@@ -62,24 +70,25 @@ public class StringAggregator implements Aggregator {
 
         if (gbfield != Aggregator.NO_GROUPING) {
             Type[] types = new Type[2];
-            types[0] = this.gbfieldtype;            
-            types[1] = Type.INT_TYPE;
-                
             String[] names = new String[2];
-            names[0] = "groupBy";
-            names[1] = what.toString();
+            types[0] = gbfieldtype;            
+            types[1] = Type.INT_TYPE;                
+            names[0] = gbfieldName;
+            names[1] = afieldName;
             tupDesc = new TupleDesc(types, names);
+
         } else {
-            Type[] types = new Type[1];
-            types[0] = Type.INT_TYPE;
-            tupDesc = new TupleDesc(types);
+            Type[] type = new Type[1];
+            String[] name = new String[1];
+            type[0] = Type.INT_TYPE;
+            name[0] = afieldName;
+            tupDesc = new TupleDesc(type, name);
         }
         // adding tuples
         for (Object key: keys) {
             int value = aggData.get(key);
             Tuple tuple = new Tuple(tupDesc);
             Field groupBy = new IntField(0);
-
             if (gbfield != Aggregator.NO_GROUPING) {
                 if (gbfieldtype == Type.INT_TYPE) {
                     groupBy = new IntField((Integer) key);
@@ -87,15 +96,13 @@ public class StringAggregator implements Aggregator {
                     groupBy = new StringField((String) key, gbfieldtype.getLen());
                 }
             }
-
             Field aggValue = new IntField(value);
             if (gbfield != Aggregator.NO_GROUPING) {
                 tuple.setField(0, groupBy);
                 tuple.setField(1, aggValue);
             } else {
                 tuple.setField(0, aggValue);
-            }
-                    
+            }  
             tuples.add(tuple);
         }
         return new TupleIterator(tupDesc, tuples);    
