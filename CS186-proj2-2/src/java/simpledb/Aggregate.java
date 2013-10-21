@@ -144,7 +144,22 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-	return agg.iterator().getTupleDesc();
+        TupleDesc desc = null;
+        if (afield != Aggregator.NO_GROUPING) {
+            Type[] types = new Type[2];
+            String[] names = new String[2];
+            types[0] = child.getTupleDesc().getFieldType(gfield);
+            types[1] = child.getTupleDesc().getFieldType(afield);
+            names[0] = child.getTupleDesc().getFieldName(gfield);
+            names[1] = aop.toString() + " (" + child.getTupleDesc().getFieldName(afield) + ")";
+            desc = new TupleDesc(types, names);
+        } else {
+            Type[] type = new Type[1];
+            String[] name = new String[1];
+            type[0] = child.getTupleDesc().getFieldType(afield);
+            name[0] = aop.toString() + " (" + child.getTupleDesc().getFieldName(afield) + ")";
+        }        
+        return desc; 
     }
 
     public void close() {
