@@ -17,26 +17,26 @@ public class BufferPool {
     public static final int PAGE_SIZE = 4096;
 
     /** Default number of pages passed to the constructor. This is used by
-    other classes. BufferPool should use the numPages argument to the
-    constructor instead. */
+        other classes. BufferPool should use the numPages argument to the
+        constructor instead. */
     public static final int DEFAULT_PAGES = 50;
     private int numPages;
     private HashMap<PageId, Page> pidToPage;
     private TreeMap<Long, PageId> timeToPid;
 
     /*
-    static class PageWithTime implements Comparable<PageWithTime> {
-        Page page;
-        long time;
-        public PageWithTime(Page page, long time) {
-            this.page = page;
-            this.time = time;
-        }
+      static class PageWithTime implements Comparable<PageWithTime> {
+      Page page;
+      long time;
+      public PageWithTime(Page page, long time) {
+      this.page = page;
+      this.time = time;
+      }
 
-        public int compareTo(PageWithTime pageWithTime) {
-            return time - pageWithTime.time;
-        }
-    }*/
+      public int compareTo(PageWithTime pageWithTime) {
+      return time - pageWithTime.time;
+      }
+      }*/
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -153,8 +153,8 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-            DbFile file = Database.getCatalog().getDbFile(tableId);
-            file.insertTuple(tid, t);
+        DbFile file = Database.getCatalog().getDbFile(tableId);
+        file.insertTuple(tid, t);
     }
 
     /**
@@ -172,9 +172,9 @@ public class BufferPool {
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, TransactionAbortedException {
-            PageId pid = t.getRecordId().getPageId();
-            DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
-            file.deleteTuple(tid, t);
+        PageId pid = t.getRecordId().getPageId();
+        DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
+        file.deleteTuple(tid, t);
     }
 
     /**
@@ -195,7 +195,7 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-    // not necessary for proj1
+        // not necessary for proj1
     }
 
     /**

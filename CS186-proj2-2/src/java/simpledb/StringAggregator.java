@@ -48,7 +48,7 @@ public class StringAggregator implements Aggregator {
         key = f.getValue();
         afieldName = tup.getTupleDesc().getFieldName(afield);
         if (!aggData.containsKey(key)) {
-                aggData.put(key, 0);
+            aggData.put(key, 0);
         }
         int aggVal = aggData.get(key);
         aggVal++;

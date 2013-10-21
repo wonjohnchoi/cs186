@@ -102,14 +102,14 @@ public class HeapFile implements DbFile {
             // https://piazza.com/class/hhrd9gio9n21s5?cid=77
             return new HeapPage((HeapPageId) pid, data);
         } catch (IOException ex) {
-	    /*
-            ex.printStackTrace();
-            System.exit(1);
-            // Never happens.
-            // See https://piazza.com/class/hhrd9gio9n21s5?cid=202.
-            return null;
-	    */
-	    throw new IllegalArgumentException();
+            /*
+              ex.printStackTrace();
+              System.exit(1);
+              // Never happens.
+              // See https://piazza.com/class/hhrd9gio9n21s5?cid=202.
+              return null;
+            */
+            throw new IllegalArgumentException();
         } catch (NullPointerException ex) {
             throw new IllegalArgumentException();
         }
@@ -145,7 +145,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
+        throws DbException, IOException, TransactionAbortedException {
         ArrayList<Page> modPages = new ArrayList<Page>();
         HeapPage freePage = null;
         // get the free page
@@ -173,13 +173,13 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
-            TransactionAbortedException {
+                                                               TransactionAbortedException {
         RecordId rid = t.getRecordId();
         HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, rid.getPageId(), Permissions.READ_WRITE);
-	// delete the tuple from the page
+        // delete the tuple from the page
         page.deleteTuple(t);
         page.markDirty(true, tid);
-	// mark the page as free
+        // mark the page as free
         freePages.put(page.getId().pageNumber(), true);
         return page;
     }
@@ -204,9 +204,9 @@ public class HeapFile implements DbFile {
                 // non-null.
                 if (pageNumber < numPages()) {
                     pageIt = ((HeapPage)bp.getPage(
-                        tid,
-                        new HeapPageId(id, pageNumber),
-                        null)).iterator();
+                                                   tid,
+                                                   new HeapPageId(id, pageNumber),
+                                                   null)).iterator();
                     pageNumber += 1;
                 }
             }

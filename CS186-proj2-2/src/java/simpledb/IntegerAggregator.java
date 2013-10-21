@@ -50,83 +50,83 @@ public class IntegerAggregator implements Aggregator {
      *            the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-            Object key = null;
-            int value = ((IntField)tup.getField(afield)).getValue();
-            int aggVal = 0;
+        Object key = null;
+        int value = ((IntField)tup.getField(afield)).getValue();
+        int aggVal = 0;
 
-            if (gbfield != Aggregator.NO_GROUPING) {
-                Field f = tup.getField(gbfield);
-                Type fType = f.getType();
-                gbfieldName = tup.getTupleDesc().getFieldName(gbfield);
-                // can we assume that fType is always equal to gbfieldtype?
-                if (f.getType() == Type.INT_TYPE) {
-                    key = ((IntField)f).getValue();
-                } else {
-                    key = ((StringField)f).getValue();
-                }
+        if (gbfield != Aggregator.NO_GROUPING) {
+            Field f = tup.getField(gbfield);
+            Type fType = f.getType();
+            gbfieldName = tup.getTupleDesc().getFieldName(gbfield);
+            // can we assume that fType is always equal to gbfieldtype?
+            if (f.getType() == Type.INT_TYPE) {
+                key = ((IntField)f).getValue();
+            } else {
+                key = ((StringField)f).getValue();
             }
-            afieldName = tup.getTupleDesc().getFieldName(afield);
+        }
+        afieldName = tup.getTupleDesc().getFieldName(afield);
             
-            switch (what) {
-                case SUM: 
-                    if (!aggData.containsKey(key)) {
-                        aggData.put(key, 0);
-                        aggVal = 0;
-                    } else {
-                        aggVal = aggData.get(key);
-                    }    
-                    aggVal += value;
-                    break;
-                case AVG:
-                    if (!aggData.containsKey(key)) {
-                        aggData.put(key, 0);
-                        numTup.put(key, 0);
-                        aggVal = 0;
-                    } else {
-			aggVal = aggData.get(key);
-                    }
-                    aggVal += value;    
-                    int numKey = numTup.get(key);
-                    numKey++;
-                    numTup.put(key, numKey);
-                    break;
-                
-                case COUNT: 
-                    if (!aggData.containsKey(key)) {
-                        aggData.put(key, 0);
-                        aggVal = 0;
-                    } else {
-                        aggVal = aggData.get(key);
-                    }    
-                    aggVal++;
-                    break;
-                
-                case MIN: 
-                    if (!aggData.containsKey(key)) {
-                        aggData.put(key, Integer.MAX_VALUE);
-                        aggVal = Integer.MAX_VALUE;
-                    } else {
-                        aggVal = aggData.get(key);
-                    }    
-                    if (aggVal > value) {
-                        aggVal = value;
-                    }
-                    break;
-                
-                case MAX: 
-                    if (!aggData.containsKey(key)) {
-                        aggData.put(key, Integer.MIN_VALUE);
-                        aggVal = 0;
-                    } else {
-                        aggVal = aggData.get(key);
-                    }    
-                    if (aggVal < value) {
-                        aggVal = value;
-                    }
-                    break;
-                
+        switch (what) {
+        case SUM: 
+            if (!aggData.containsKey(key)) {
+                aggData.put(key, 0);
+                aggVal = 0;
+            } else {
+                aggVal = aggData.get(key);
+            }    
+            aggVal += value;
+            break;
+        case AVG:
+            if (!aggData.containsKey(key)) {
+                aggData.put(key, 0);
+                numTup.put(key, 0);
+                aggVal = 0;
+            } else {
+                aggVal = aggData.get(key);
             }
-            aggData.put(key, aggVal);           
+            aggVal += value;    
+            int numKey = numTup.get(key);
+            numKey++;
+            numTup.put(key, numKey);
+            break;
+                
+        case COUNT: 
+            if (!aggData.containsKey(key)) {
+                aggData.put(key, 0);
+                aggVal = 0;
+            } else {
+                aggVal = aggData.get(key);
+            }    
+            aggVal++;
+            break;
+                
+        case MIN: 
+            if (!aggData.containsKey(key)) {
+                aggData.put(key, Integer.MAX_VALUE);
+                aggVal = Integer.MAX_VALUE;
+            } else {
+                aggVal = aggData.get(key);
+            }    
+            if (aggVal > value) {
+                aggVal = value;
+            }
+            break;
+                
+        case MAX: 
+            if (!aggData.containsKey(key)) {
+                aggData.put(key, Integer.MIN_VALUE);
+                aggVal = 0;
+            } else {
+                aggVal = aggData.get(key);
+            }    
+            if (aggVal < value) {
+                aggVal = value;
+            }
+            break;
+                
+        }
+        aggData.put(key, aggVal);           
     }
 
     /**
