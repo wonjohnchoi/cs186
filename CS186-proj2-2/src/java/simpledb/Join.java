@@ -27,14 +27,26 @@ public class Join extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        this.p  = p;
+        this.p = p;
         this.child1 = child1;
         this.child2 = child2;
         try {
+            int i = 0;
+            child1.open();
+            while (child1.hasNext()) {
+                child1.next();
+                i += 1;
+            }
+            System.out.println("Size of child1: " + i);
+            child1.close();
+
             child2.open();
             index2 = new ArrayList<Tuple>();
             while (child2.hasNext()) {
                 index2.add(child2.next());
+                if (index2.size() % 10000 == 0) {
+                    System.out.println(index2.size());
+                }
             }
             System.out.println("Size of index: "+index2.size());
             child2.close();
@@ -116,42 +128,42 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        if (i2 == index2.size()) {
-            next1 = null;
-            i2 = 0;
-
-        }
-        if (next1 == null && !child1.hasNext()) return null;
-        if (next1 == null) next1 = child1.next();
-        Tuple next2 = null;
-
-        for (int i = i2; i2 < index2.size(); i2++) {
-            if (p.filter(next1, index2.get(i2))) {
-                next2 = index2.get(i2);
-                i2 += 1;
-                break;
-            }
-        }
-
-        /*
+        if (index2.size() == 0) return null;
         while (true) {
-            if (p.filter(next1, next2) || !child2.hasNext()) break;
-            next2 = child2.next();
-            System.out.println(next2);
-            }*/
+            if (i2 == index2.size()) {
+                next1 = null;
+                i2 = 0;
+            }
+            if (next1 == null && !child1.hasNext()) return null;
+            if (next1 == null) next1 = child1.next();
+            Tuple next2 = null;
 
-        if (next2 != null) {
-            Tuple next = new Tuple(getTupleDesc());
-            int i = 0;
-            for (Iterator<Field> fields = next1.fields(); fields.hasNext();) {
-                next.setField(i++, fields.next());
+            for (int i = i2; i2 < index2.size(); i2++) {
+                if (p.filter(next1, index2.get(i2))) {
+                    next2 = index2.get(i2);
+                    i2 += 1;
+                    break;
+                }
             }
-            for (Iterator<Field> fields = next2.fields(); fields.hasNext();) {
-                next.setField(i++, fields.next());
+
+            /*
+              while (true) {
+              if (p.filter(next1, next2) || !child2.hasNext()) break;
+              next2 = child2.next();
+              System.out.println(next2);
+              }*/
+
+            if (next2 != null) {
+                Tuple next = new Tuple(getTupleDesc());
+                int i = 0;
+                for (Iterator<Field> fields = next1.fields(); fields.hasNext();) {
+                    next.setField(i++, fields.next());
+                }
+                for (Iterator<Field> fields = next2.fields(); fields.hasNext();) {
+                    next.setField(i++, fields.next());
+                }
+                return next;
             }
-            return next;
-        } else {
-            return fetchNext();
         }
     }
 
