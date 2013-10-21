@@ -227,13 +227,15 @@ public class BufferPool {
      */
     private synchronized  void evictPage() throws DbException {
         Map.Entry<Long, PageId> timeAndPid = timeToPid.pollFirstEntry();
+        if (timeAndPid == null) {
+            throw new DbException("No page to evict!");
+        }
         PageId pid = timeAndPid.getValue();
         // flush before removing pid from pidToPage because flush uses pid.
         try {
             flushPage(pid);
         } catch (IOException ex) {
-            ex.printStackTrace();
-            System.exit(1);
+            throw new DbException("Cannot flush page");
         }
 
         if (pidToPage.remove(pid) == null) {
