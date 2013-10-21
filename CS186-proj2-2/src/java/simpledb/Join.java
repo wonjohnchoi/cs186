@@ -40,6 +40,8 @@ public class Join extends Operator {
         int numTuples1 = (int)((BufferPool.PAGE_SIZE * 8) / (tupleSize1 * 8 + 1));
         int tupleSize2 = child1.getTupleDesc().getSize();
         int numTuples2 = (int)((BufferPool.PAGE_SIZE * 8) / (tupleSize2 * 8 + 1));
+        //numTuples1 = Math.max(numTuples1, 400000);
+        //numTuples2 = Math.max(numTuples2, 400000);
 
         this.numTuples1 = numTuples1;
         this.numTuples2 = numTuples2;
@@ -85,10 +87,6 @@ public class Join extends Operator {
                 page2.add(child2.next());
                 if (i % 10000 == 0) {
                     System.out.println(i);
-                }
-                if (i >= numTuples2) {
-                    fit2 = false;
-                    break;
                 }
             }
             System.out.println("Size of index: " + i);
@@ -171,6 +169,7 @@ public class Join extends Operator {
     public void rewind() throws DbException, TransactionAbortedException {
         childIt1.rewind();
         childIt2.rewind();
+        i1 = 0;
         next1 = null;
     }
 
@@ -237,7 +236,7 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         //System.out.println("A");
-        if (fit1 || fit2) {
+        //if (fit1 || fit2) {
             //System.out.println("B");
             Tuple next2 = null;
             while (true) {
@@ -247,7 +246,18 @@ public class Join extends Operator {
                     i1 += 1;
                 }
                 //System.out.println(i1);
-                if (i1 == page1.size()) break;
+                if (i1 >= page1.size()) {
+                    if (fit1 || fit2) break;
+                    else if (!childIt1.hasNext()) break;
+                    else {
+                        page1.clear();
+                        i1 = 0;
+                        for (int i = 0; i < numTuples1 && childIt1.hasNext(); i++) {
+                            page1.add(childIt1.next());
+                        }
+                        childIt2.rewind();
+                    }
+                }
                 next1 = page1.get(i1);
                 boolean found = false;
                 while (childIt2.hasNext()) {
@@ -268,7 +278,7 @@ public class Join extends Operator {
                     return next;
                 }
             }
-        }
+            //}
         return null;
     }
 
