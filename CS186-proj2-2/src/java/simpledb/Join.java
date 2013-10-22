@@ -12,6 +12,10 @@ public class Join extends Operator {
     private JoinPredicate p;
     private DbIterator child1;
     private DbIterator child2;
+
+    private DbIterator childIter1;
+    private DbIterator childIter2;
+
     private List<Tuple> cachedPage;
     // The index of cached page that we are currently on.
     private int cachedIdx;
@@ -40,7 +44,8 @@ public class Join extends Operator {
         numTuples1 = (int)((BufferPool.PAGE_SIZE * 8) / (tupleSize1 * 8 + 1));
         int tupleSize2 = child1.getTupleDesc().getSize();
         numTuples2 = (int)((BufferPool.PAGE_SIZE * 8) / (tupleSize2 * 8 + 1));
-
+        numTuples1 = 100;
+        numTuples2 = 100;
         this.p = p;
         this.child1 = child1;
         this.child2 = child2;
@@ -89,30 +94,23 @@ public class Join extends Operator {
             System.exit(1);
         }
 
+        childIter1 = child1;
+        childIter2 = child2;
+
         if (fit1) {
             System.out.println("Best!");
             switched = false;
         } else if (fit2) {
             // swap child1 and child2
-            // to put one that fits into a page
-            // to be on the outer loop.
-            DbIterator tmp2;
-            tmp2 = child1;
-            child1 = child2;
-            child2 = tmp2;
+            childIter2 = child1;
+            childIter1 = child2;
 
             int tmp;
             tmp = numTuples1;
             numTuples1 = numTuples2;
             numTuples2 = tmp;
-            System.out.println(child1.getTupleDesc());
-            System.out.println(child2.getTupleDesc());
-            System.out.println("Switched");
-            p = new JoinPredicate(p.getField2(), p.getOperator(), p.getField1());
-
             switched = true;
         } else {
-            System.out.println("Neither");
             switched = false;
         }
     }
@@ -150,20 +148,20 @@ public class Join extends Operator {
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         super.open();
-        child1.open();
-        child2.open();
+        childIter1.open();
+        childIter2.open();
         cachedIdx = 0;
     }
 
     public void close() {
         super.close();
-        child1.close();
-        child2.close();
+        childIter1.close();
+        childIter2.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        child1.rewind();
-        child2.rewind();
+        childIter1.rewind();
+        childIter2.rewind();
         cachedIdx = 0;
         next1 = null;
     }
@@ -203,36 +201,43 @@ public class Join extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         Tuple next2 = null;
         while (true) {
-            if (!child2.hasNext()) {
-                child2.rewind();
+            if (!childIter2.hasNext()) {
+                childIter2.rewind();
                 cachedIdx += 1;
             }
             if (cachedIdx >= cachedPage.size()) {
                 if (fit1 || fit2) break;
-                else if (!child1.hasNext()) break;
+                else if (!childIter1.hasNext()) break;
                 else {
                     cachedPage.clear();
                     cachedIdx = 0;
-                    for (int i = 0; i < numTuples1 && child1.hasNext(); i++) {
-                        cachedPage.add(child1.next());
+                    for (int i = 0; i < numTuples1 && childIter1.hasNext(); i++) {
+                        cachedPage.add(childIter1.next());
                     }
-                    child2.rewind();
+                    childIter2.rewind();
                 }
             }
             next1 = cachedPage.get(cachedIdx);
             boolean found = false;
-            while (child2.hasNext()) {
-                next2 = child2.next();
-                System.out.println("next1:"+next1+"|next2:"+next2);
-                System.out.println(p.getField1() + " " + p.getField2());
-                
-                if (p.filter(next1, next2)) {
+            Tuple t1, t2;
+            t1 = t2 = null;
+            while (childIter2.hasNext()) {
+                next2 = childIter2.next();
+         
+                if (switched) {
+                    t1 = next2;
+                    t2 = next1;
+                } else {
+                    t1 = next1;
+                    t2 = next2;
+                }
+                if (p.filter(t1, t2)) {
                     found = true;
                     break;
                 }
             }
             if (found) {
-                return combineTuples(next1, next2);
+                return combineTuples(t1, t2);
             }
         }
         return null;
