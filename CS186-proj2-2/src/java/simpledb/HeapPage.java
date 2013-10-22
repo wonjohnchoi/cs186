@@ -323,9 +323,9 @@ public class HeapPage implements Page {
         int offset = i % 8;
         byte mask = (byte)(1 << offset);
         if (value) {
-            b = (byte) (b | mask);
+            b = (byte) (b | mask); // slot used
         } else {
-            b = (byte) (b & (~mask));            
+            b = (byte) (b & (~mask)); // slot empty           
         }
         header[(int) (i / 8)] = b;
     }

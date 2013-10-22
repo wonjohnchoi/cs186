@@ -110,7 +110,7 @@ public class HeapFile implements DbFile {
               return null;
             */
             throw new IllegalArgumentException();
-        } catch (NullPointerException ex) {
+        } catch (NullPointerException ex) { // if data doesn't exist
             throw new IllegalArgumentException();
         }
     }
@@ -158,7 +158,7 @@ public class HeapFile implements DbFile {
         }
         if (freePage == null) {
             freePage = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()), Permissions.READ_WRITE);
-            writePage(freePage);
+            writePage(freePage); // append the new data from a new page to the disk
         }
         freePage.insertTuple(t);
         freePage.markDirty(true, tid);
@@ -177,14 +177,14 @@ public class HeapFile implements DbFile {
         PageId pid = rid.getPageId();
         boolean pgNotExist = true;
         int pageNo = pid.pageNumber();
-        for (int i = 0; i < numPages(); i++) {
+        for (int i = 0; i < numPages(); i++) { // see if the tuple is in the file
             if (i == pageNo) {
                 pgNotExist = false;
                 break;
             }
         }
-        if (pgNotExist) { 
-            throw new DbException("page not exist in the file!");
+        if (pgNotExist) { // tuple is not in the file
+            throw new DbException("page not exist in the file!"); 
         }
         HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
         // delete the tuple from the page
