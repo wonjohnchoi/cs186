@@ -97,10 +97,10 @@ public class StringAggregator implements Aggregator {
                 }
             }
             Field aggValue = new IntField(value);
-            if (gbfield != Aggregator.NO_GROUPING) {
+            if (gbfield != Aggregator.NO_GROUPING) { // grouping
                 tuple.setField(0, groupBy);
                 tuple.setField(1, aggValue);
-            } else {
+            } else { // no grouping
                 tuple.setField(0, aggValue);
             }  
             tuples.add(tuple);

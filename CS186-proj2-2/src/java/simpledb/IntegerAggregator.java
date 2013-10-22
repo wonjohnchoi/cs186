@@ -162,26 +162,26 @@ public class IntegerAggregator implements Aggregator {
             int value = aggData.get(key);
             Tuple tuple = new Tuple(tupDesc);
             Field groupBy = new IntField(0);
-            if (gbfield != Aggregator.NO_GROUPING) {
+            if (gbfield != Aggregator.NO_GROUPING) {  // grouping
                 if (gbfieldtype == Type.INT_TYPE) {
                     groupBy = new IntField((Integer) key);
                 } else if (gbfieldtype == Type.STRING_TYPE) {
                     groupBy = new StringField((String) key, gbfieldtype.getLen());
                 }
             }
-            if (what == Aggregator.Op.AVG) {
+            if (what == Aggregator.Op.AVG) { // calculating the average of the aggregated data
                 int count = numTup.get(key);
                 if (count == 0) {
-                    return new TupleIterator(null, null);
+                    return new TupleIterator(null, null); // if count = 0, return an empty iterator. 
                 } else {
                     value = value / count;
                 }
             }
             Field aggValue = new IntField(value);
-            if (gbfield != Aggregator.NO_GROUPING) {
+            if (gbfield != Aggregator.NO_GROUPING) { // grouping
                 tuple.setField(0, groupBy);
                 tuple.setField(1, aggValue);
-            } else {
+            } else { // no grouping
                 tuple.setField(0, aggValue);
             }                    
             tuples.add(tuple);

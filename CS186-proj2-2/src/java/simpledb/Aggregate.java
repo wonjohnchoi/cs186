@@ -145,7 +145,7 @@ public class Aggregate extends Operator {
      */
     public TupleDesc getTupleDesc() {
         TupleDesc desc = null;
-        if (afield != Aggregator.NO_GROUPING) {
+        if (afield != Aggregator.NO_GROUPING) { // when there is "Group By"
             Type[] types = new Type[2];
             String[] names = new String[2];
             types[0] = child.getTupleDesc().getFieldType(gfield);
@@ -153,7 +153,7 @@ public class Aggregate extends Operator {
             names[0] = child.getTupleDesc().getFieldName(gfield);
             names[1] = aop.toString() + " (" + child.getTupleDesc().getFieldName(afield) + ")";
             desc = new TupleDesc(types, names);
-        } else {
+        } else { // when there is no grouping
             Type[] type = new Type[1];
             String[] name = new String[1];
             type[0] = child.getTupleDesc().getFieldType(afield);

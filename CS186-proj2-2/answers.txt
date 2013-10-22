@@ -1,8 +1,8 @@
 Wonjohn Choi (cs186-de)
 Jisoo Kim (cs186-if)
 
-1. There was no special algorithms for aggregators. In IntegerAggregator, for AVG, we decided to calculate the average in the iterator(), not in mergeTuplesIntoGroup(). 
-   For HeapFile.insertTuple(), we decided to change BufferPool.getPage() in order to add a new page to the file when there's no more free pages to add a tuple. So we call HeapFile.writePage() in BufferPool.getPage().
+1. There was no special algorithms for aggregators. In IntegerAggregator, for AVG, we decided to calculate the average in the iterator(), not in mergeTuplesIntoGroup(). Both Integer and String Aggregators have HashMap<Object, Integer> that stores aggregated data (key-value pair). 
+   For HeapFile.insertTuple(), we decided to change BufferPool.getPage() in order to add a new page to the file when there's no more free pages to add a tuple. When a new page is added to the file, HeapFile.insertTuple() calls HeapFile.writePage() to append a new data to the disk.
 
 For Join, we first checked if all tuples in either child1 or child2 can fit in one page. If either of them can fit in a page, we make the one that fits in a page to be on the outer loop. Then, store all tuples in the page in an internal data structure, so we only have cost of looping over inner loop. If neither of them fit in a page, we do page-oriented nested loop join.
 
