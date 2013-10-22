@@ -16,6 +16,8 @@ public class Join extends Operator {
     private DbIterator childIter1;
     private DbIterator childIter2;
 
+    // We cache some pages to perform page-oriented
+    // loop join.
     private List<Tuple> cachedPage;
     // The index of cached page that we are currently on.
     private int cachedIdx;
@@ -98,7 +100,6 @@ public class Join extends Operator {
         childIter2 = child2;
 
         if (fit1) {
-            System.out.println("Best!");
             switched = false;
         } else if (fit2) {
             // swap child1 and child2

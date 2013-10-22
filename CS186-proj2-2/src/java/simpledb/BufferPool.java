@@ -21,7 +21,11 @@ public class BufferPool {
         constructor instead. */
     public static final int DEFAULT_PAGES = 50;
     private int numPages;
+
     private HashMap<PageId, Page> pidToPage;
+    // Map time a page is put in a bufferpool
+    // to pageid. Used to find pageid that is
+    // least recently used.
     private TreeMap<Long, PageId> timeToPid;
 
     /**
