@@ -172,10 +172,21 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
-                                                               TransactionAbortedException {
+    public Page deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException {
         RecordId rid = t.getRecordId();
-        HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, rid.getPageId(), Permissions.READ_WRITE);
+        PageId pid = rid.getPageId();
+        boolean pgNotExist = true;
+        int pageNo = pid.pageNumber();
+        for (int i = 0; i < numPages(); i++) {
+            if (i == pageNo) {
+                pgNotExist = false;
+                break;
+            }
+        }
+        if (pgNotExist) { 
+            throw new DbException("page not exist in the file!");
+        }
+        HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
         // delete the tuple from the page
         page.deleteTuple(t);
         page.markDirty(true, tid);
@@ -240,6 +251,5 @@ public class HeapFile implements DbFile {
             }
         };
     }
-
 }
 
