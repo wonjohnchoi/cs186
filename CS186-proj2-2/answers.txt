@@ -22,3 +22,57 @@ Jisoo mainly worked on implementation and debugging of Aggregate, IntegerAggrega
 5. Wonjohn used roughly 15 hours on the project. Jisoo used roughly 15 hours on the project.
 
 We didn't find anything particularly difficult or confusing.
+
+6. Contest
+Output of Query 1
+p.title
+------------
+Optimizing ethanol production selectivity.
+
+Development of feedforward receptive field structure of a simple cell and its contribution to the orientation selectivity: a mod
+
+Influences of formant bandwidth and auditory frequency selectivity on identification of place of articulation in stop consonants
+
+A theoretical entropy score as a single value to express inhibitor selectivity.
+
+ASH structure alignment package: Sensitivity and selectivity in domain classification.
+
+
+ 5 rows.
+Transaction 0 committed.
+----------------
+0.52 seconds
+
+Output of Query 2
+p.title v.name
+-----------------------
+Further Normalization of the Data Base Relational Model.        IBM Research Report  San Jose  California
+
+Interactive Support for Non-Programmers: The Relational and Network Approaches. IBM Research Report  San Jose  California
+
+Data Base Sublanguage Founded on the Relational Calculus.       IBM Research Report  San Jose  California
+
+Relational Completeness of Data Base Sublanguages.      In: R. Rustin (ed.): Database Systems: 65-98  Prentice Hall and IBM Research Report RJ 987  San Jose  California
+
+Derivability  Redundancy and Consistency of Relations Stored in Large Data Banks.       IBM Research Report  San Jose  California
+
+The Capabilities of Relational Database Management Systems.     IBM Research Report  San Jose  California
+
+Seven Steps to Rendezvous with the Casual User. IFIP Working Conference Data Base Management
+
+Normalized Data Base Structure: A Brief Tutorial.       IBM Research Report  San Jose  California
+
+The Gamma-0 n-ary Relational Data Base Interface Specifications of Objects and Operations.      IBM Research Report
+
+RENDEZVOUS Version 1: An Experimental English Language Query Formulation System for Casual Users of Relational Data Bases.      IBM Research Report
+
+Universal  Relation Fails to Replace Relational Model (letter to the editor).   IEEE Software
+
+
+ 11 rows.
+Transaction 0 committed.
+----------------
+5.00 seconds
+
+Query 3
+The program has been running for the past 20 hours without any output and didn't finish.
