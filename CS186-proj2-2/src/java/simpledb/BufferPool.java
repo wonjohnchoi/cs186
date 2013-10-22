@@ -24,20 +24,6 @@ public class BufferPool {
     private HashMap<PageId, Page> pidToPage;
     private TreeMap<Long, PageId> timeToPid;
 
-    /*
-      static class PageWithTime implements Comparable<PageWithTime> {
-      Page page;
-      long time;
-      public PageWithTime(Page page, long time) {
-      this.page = page;
-      this.time = time;
-      }
-
-      public int compareTo(PageWithTime pageWithTime) {
-      return time - pageWithTime.time;
-      }
-      }*/
-
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -88,6 +74,14 @@ public class BufferPool {
                 } catch (IOException ex2) {}
             }
             pidToPage.put(pid, page);
+            timeToPid.put(System.currentTimeMillis(), pid);
+        } else {
+            for (Map.Entry<Long, PageId> timeAndPid : timeToPid.entrySet()) {
+                if (timeAndPid.getValue() == pid) {
+                    timeToPid.remove(timeAndPid.getKey());
+                    break;
+                }
+            }
             timeToPid.put(System.currentTimeMillis(), pid);
         }
         return pidToPage.get(pid);

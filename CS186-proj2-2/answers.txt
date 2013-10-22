@@ -4,6 +4,10 @@ Jisoo Kim (cs186-if)
 1. There was no special algorithms for aggregators. In IntegerAggregator, for AVG, we decided to calculate the average in the iterator(), not in mergeTuplesIntoGroup(). 
    For HeapFile.insertTuple(), we decided to change BufferPool.getPage() in order to add a new page to the file when there's no more free pages to add a tuple. When a new page is added to the file, HeapFile.insertTuple() calls HeapFile.writePage() to append a new data to the disk.
 
+For Join, we first checked if all tuples in either child1 or child2 can fit in one page. If either of them can fit in a page, we make the one that fits in a page to be on the outer loop. Then, store all tuples in the page in an internal data structure, so we only have cost of looping over inner loop. If neither of them fit in a page, we do page-oriented nested loop join.
+
+For BufferPool, we use TreeMap<Long, PageId> to store the time a page was stored in BufferPool and PageId. With this, in evictPage, we can efficiently find the PageId with the lowest associated time, which is the least recently used PageId (LRU). This approach has a tradeoff though: when user searches for a page id that is already in bufferpool, it takes O(n) time to update time field of the tree map.
+
 2. In HeapFile.readPage(), we decided to throw an IllegalArgumentException() whenever a page doesn't exist so that BufferPool.getPage() can catch it and fetch a new page.
 
 3. We did not miss any elements.
@@ -11,10 +15,64 @@ Jisoo Kim (cs186-if)
 4.
 Wonjohn and Jisoo both worked on implementation of BufferPool.
 
-Wonjohn mainly worked on implementation and debugging of .
+Wonjohn mainly worked on implementation and debugging of Predicate, JoinPredicate, Filter, Join, Insert, Delete, BufferPool.
 
 Jisoo mainly worked on implementation and debugging of Aggregate, IntegerAggregator, StringAggregator, HeapPage, HeapFile.
 
-5. Wonjohn used roughly 14 hours on the project. Jisoo used roughly 15 hours on the project.
+5. Wonjohn used roughly 15 hours on the project. Jisoo used roughly 15 hours on the project.
 
 We didn't find anything particularly difficult or confusing.
+
+6. Contest
+Output of Query 1
+p.title
+------------
+Optimizing ethanol production selectivity.
+
+Development of feedforward receptive field structure of a simple cell and its contribution to the orientation selectivity: a mod
+
+Influences of formant bandwidth and auditory frequency selectivity on identification of place of articulation in stop consonants
+
+A theoretical entropy score as a single value to express inhibitor selectivity.
+
+ASH structure alignment package: Sensitivity and selectivity in domain classification.
+
+
+ 5 rows.
+Transaction 0 committed.
+----------------
+0.52 seconds
+
+Output of Query 2
+p.title v.name
+-----------------------
+Further Normalization of the Data Base Relational Model.        IBM Research Report  San Jose  California
+
+Interactive Support for Non-Programmers: The Relational and Network Approaches. IBM Research Report  San Jose  California
+
+Data Base Sublanguage Founded on the Relational Calculus.       IBM Research Report  San Jose  California
+
+Relational Completeness of Data Base Sublanguages.      In: R. Rustin (ed.): Database Systems: 65-98  Prentice Hall and IBM Research Report RJ 987  San Jose  California
+
+Derivability  Redundancy and Consistency of Relations Stored in Large Data Banks.       IBM Research Report  San Jose  California
+
+The Capabilities of Relational Database Management Systems.     IBM Research Report  San Jose  California
+
+Seven Steps to Rendezvous with the Casual User. IFIP Working Conference Data Base Management
+
+Normalized Data Base Structure: A Brief Tutorial.       IBM Research Report  San Jose  California
+
+The Gamma-0 n-ary Relational Data Base Interface Specifications of Objects and Operations.      IBM Research Report
+
+RENDEZVOUS Version 1: An Experimental English Language Query Formulation System for Casual Users of Relational Data Bases.      IBM Research Report
+
+Universal  Relation Fails to Replace Relational Model (letter to the editor).   IEEE Software
+
+
+ 11 rows.
+Transaction 0 committed.
+----------------
+5.00 seconds
+
+Query 3
+The program has been running for the past 20 hours without any output and didn't finish.
