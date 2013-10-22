@@ -2,7 +2,7 @@ Wonjohn Choi (cs186-de)
 Jisoo Kim (cs186-if)
 
 1. There was no special algorithms for aggregators. In IntegerAggregator, for AVG, we decided to calculate the average in the iterator(), not in mergeTuplesIntoGroup(). 
-   For HeapFile.insertTuple(), we decided to change BufferPool.getPage() in order to add a new page to the file when there's no more free pages to add a tuple. So we call HeapFile.writePage() in BufferPool.getPage().
+   For HeapFile.insertTuple(), we decided to change BufferPool.getPage() in order to add a new page to the file when there's no more free pages to add a tuple. When a new page is added to the file, HeapFile.insertTuple() calls HeapFile.writePage() to append a new data to the disk.
 
 2. In HeapFile.readPage(), we decided to throw an IllegalArgumentException() whenever a page doesn't exist so that BufferPool.getPage() can catch it and fetch a new page.
 
