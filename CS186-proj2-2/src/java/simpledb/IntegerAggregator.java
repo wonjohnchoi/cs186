@@ -170,7 +170,12 @@ public class IntegerAggregator implements Aggregator {
                 }
             }
             if (what == Aggregator.Op.AVG) {
-                value = value / numTup.get(key);
+                int count = numTup.get(key);
+                if (count == 0) {
+                    return new TupleIterator(null, null);
+                } else {
+                    value = value / count;
+                }
             }
             Field aggValue = new IntField(value);
             if (gbfield != Aggregator.NO_GROUPING) {
