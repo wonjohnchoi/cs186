@@ -1,4 +1,5 @@
 *.class
 *~
 *#*
-testreport
+*/testreport/*
+*/dist/*
