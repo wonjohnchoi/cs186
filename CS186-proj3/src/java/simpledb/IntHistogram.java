@@ -1,6 +1,6 @@
 package simpledb;
 import java.util.*;
-
+import static simpledb.Predicate.Op.*;
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
 public class IntHistogram {
@@ -98,24 +98,24 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
-        if (op == Predicate.Op.NOT_EQUALS) return 1 - estimateSelectivity(Predicate.Op.EQUALS, v);
-        if (op == Predicate.Op.GREATER_THAN_OR_EQ) {
-            return estimateSelectivity(Predicate.Op.EQUALS, v)
-                + estimateSelectivity(Predicate.Op.GREATER_THAN, v);
+        if (op == NOT_EQUALS) return 1 - estimateSelectivity(EQUALS, v);
+        if (op == GREATER_THAN_OR_EQ) {
+            return estimateSelectivity(EQUALS, v)
+                + estimateSelectivity(GREATER_THAN, v);
         }
-        if (op == Predicate.Op.LESS_THAN_OR_EQ) {
-            return estimateSelectivity(Predicate.Op.EQUALS, v)
-                + estimateSelectivity(Predicate.Op.LESS_THAN, v);
+        if (op == LESS_THAN_OR_EQ) {
+            return estimateSelectivity(EQUALS, v)
+                + estimateSelectivity(LESS_THAN, v);
         }
         
-        if (op == Predicate.Op.EQUALS) {
+        if (op == EQUALS) {
             if (v < min || v > max) {
                 return 0;
             }
-        } else if (op == Predicate.Op.GREATER_THAN) {
+        } else if (op == GREATER_THAN) {
             if (v < min) return 1;
             else if (v >= max) return 0;
-        } else if (op == Predicate.Op.LESS_THAN) {
+        } else if (op == LESS_THAN) {
             if (v > max) return 1;
             else if (v <= min) return 0;
         }
@@ -128,14 +128,14 @@ public class IntHistogram {
         int h = buckets[idx];
         double w = bucketSize;
 
-        if (op == Predicate.Op.EQUALS) {
+        if (op == EQUALS) {
             selectivity = ((double) h / w) / ntups;
-        } else if (op == Predicate.Op.GREATER_THAN) {
+        } else if (op == GREATER_THAN) {
             selectivity = (double) h / ntups * (end - v) / w;
             for (int i = idx + 1; i < numBuckets; ++i) {
                 selectivity += (double) buckets[i] / ntups;
             }
-        } else if (op == Predicate.Op.LESS_THAN) {
+        } else if (op == LESS_THAN) {
             selectivity = (double) h / ntups * (v - start) / w;
             for (int i = 0; i < idx; ++i) {
                 selectivity += (double) buckets[i] / ntups;
