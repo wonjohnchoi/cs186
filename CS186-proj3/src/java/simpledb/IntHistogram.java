@@ -15,29 +15,6 @@ public class IntHistogram {
     private int[] buckets;
 
     /**
-     * Get the start integer value of bucketIdx'th bucket.
-     * @param bucketIdx the index of bucket we are interested in.
-     */
-    private double getBucketStart(int bucketIdx) {
-        // This if stmt is unnecessary but I put this here
-        // because I do not know Java's doubleing system well.
-        if (bucketIdx == 0) return min;
-        return min + bucketSize * bucketIdx;
-    }
-
-    /**
-     * Get the end integer value of bucketIdx'th bucket.
-     * @param bucketIdx the index of bucket we are interested in.
-     */
-    private double getBucketEnd(int bucketIdx) {
-        // This if stmt is unnecessary but I put this here
-        // because I do not know Java's doubleing system well.
-        if (bucketIdx == numBuckets - 1) return max;
-        return min + bucketSize * (bucketIdx + 1);
-    }
-
-
-    /**
      * Get the index of bucket a value belongs to.
      * @param val the value we are interested in.
      */
@@ -123,10 +100,14 @@ public class IntHistogram {
 
         double selectivity;
         int idx = getBucketIdx(v);
-        double start = getBucketStart(idx);
-        double end = getBucketEnd(idx);
+        int start = (int) Math.ceil(min + bucketSize * idx);
+        double endTmp = min + bucketSize * (idx + 1);
+        int end = (int) Math.floor(endTmp);
+        // because start is inclusive and end is exclusive.
+        if (endTmp == end) --end;
         int h = buckets[idx];
-        double w = bucketSize;
+        // w will never be equal to 0 because v belongs in this bucket.
+        double w = Math.floor(end) - Math.ceil(start) + 1;
 
         if (op == EQUALS) {
             selectivity = ((double) h / w) / ntups;

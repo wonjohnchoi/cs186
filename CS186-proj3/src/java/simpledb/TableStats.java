@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -65,8 +66,8 @@ public class TableStats {
      * histograms.
      */
     static final int NUM_HIST_BINS = 100;
-    private IntHistogram intHist;
-    private StringHistogram strHist;
+    private IntHistogram[] intHists;
+    private StringHistogram[] strHists;
     private int ioCostPerPage;
     private int numPages;
     private int numTuples;
@@ -84,45 +85,50 @@ public class TableStats {
     public TableStats(int tableid, int ioCostPerPage) {
         DbFile df = Database.getCatalog().getDbFile(tableid);
         DbFileIterator dfIt = df.iterator(null);
-        IntHistogram intHist = null;
-        StringHistogram strHist = null;
+        int numFields = df.getTupleDesc().numFields();
+        int[] mins = new int[numFields];
+        int[] maxs = new int[numFields];
+        Arrays.fill(mins, Integer.MAX_VALUE);
+        Arrays.fill(maxs, Integer.MIN_VALUE);
 
         numTuples = 0;
         try {
-            // pass 1
-            int min = Integer.MAX_VALUE;
-            int max = Integer.MIN_VALUE;
+            // pass 1: calculate mins and maxs for each field
             dfIt.open();
             while (dfIt.hasNext()) {
                 Tuple tup = dfIt.next();
                 ++numTuples;
-                Iterator<Field> fieldIt = tup.fields();
-                while (fieldIt.hasNext()) {
-                    Field field = fieldIt.next();
+                for (int i = 0; i < numFields; ++i) {
+                    Field field = tup.getField(i);
                     Type type = field.getType();
                     if (type == Type.INT_TYPE) {
                         int val = ((IntField) field).getValue();
-                        max = Math.max(max, val);
-                        min = Math.min(min, val);
+                        maxs[i] = Math.max(maxs[i], val);
+                        mins[i] = Math.min(mins[i], val);
                     }
                 }
             }
             dfIt.close();
 
-            // pass 2
+            // pass 2: collect data to histograms
             dfIt.open();
-            intHist = new IntHistogram(1000, min, max);
-            strHist = new StringHistogram(1000);
+            intHists = new IntHistogram[numFields];
+            strHists = new StringHistogram[numFields];
+            for (int i = 0; i < numFields; ++i) {
+                // TODO(wonjohn): for now, we use 1000 buckets but
+                // not sure if this is a reasonable value to use.
+                intHists[i] = new IntHistogram(1000, mins[i], maxs[i]);
+                strHists[i] = new StringHistogram(1000);
+            }
             while (dfIt.hasNext()) {
                 Tuple tup = dfIt.next();
-                Iterator<Field> fieldIt = tup.fields();
-                while (fieldIt.hasNext()) {
-                    Field field = fieldIt.next();
+                for (int i = 0; i < numFields; ++i) {
+                    Field field = tup.getField(i);
                     Type type = field.getType();
                     if (type == Type.INT_TYPE) {
-                        intHist.addValue(((IntField) field).getValue());
+                        intHists[i].addValue(((IntField) field).getValue());
                     } else if (type == Type.STRING_TYPE) {
-                        strHist.addValue(((StringField) field).getValue());
+                        strHists[i].addValue(((StringField) field).getValue());
                     } else {
                         System.out.println("Unknown Field Type: " + type);
                         System.exit(1);
@@ -134,8 +140,7 @@ public class TableStats {
         } catch (TransactionAbortedException ex) {
             ex.printStackTrace();
         }
-        this.intHist = intHist;
-        this.strHist = strHist;
+
         this.ioCostPerPage = ioCostPerPage;
         this.numPages = ((HeapFile) df).numPages();
     }
@@ -201,9 +206,9 @@ public class TableStats {
         Type type = constant.getType();
         double selectivity = -1;
         if (type == Type.INT_TYPE) {
-            selectivity = intHist.estimateSelectivity(op, ((IntField) constant).getValue());
+            selectivity = intHists[field].estimateSelectivity(op, ((IntField) constant).getValue());
         } else if (type == Type.STRING_TYPE) {
-            selectivity = strHist.estimateSelectivity(op, ((StringField) constant).getValue());
+            selectivity = strHists[field].estimateSelectivity(op, ((StringField) constant).getValue());
         } else {
             System.out.println("Unknown Type: " + type);
             System.exit(1);
