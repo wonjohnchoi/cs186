@@ -1,0 +1,44 @@
+<The Life of Query>
+
+Step 1: simpledb.Parser.main() and simpledb.Parser.start()
+
+simpledb.Parser.main() is the entry point for the SimpleDB system. It calls simpledb.Parser.start(). The latter performs three main actions:
+
+It populates the SimpleDB catalog from the catalog text file provided by the user as argument (Database.getCatalog().loadSchema(argv[0]);).
+For each table defined in the system catalog, it computes statistics over the data in the table by calling: TableStats.computeStatistics(), which then does: TableStats s = new TableStats(tableid, IOCOSTPERPAGE);
+It processes the statements submitted by the user (processNextStatement(new ByteArrayInputStream(statementBytes));)
+
+Step 2: simpledb.Parser.processNextStatement()
+
+This method takes two key actions:
+
+First, it gets a physical plan for the query by invoking handleQueryStatement((ZQuery)s);
+Then it executes the query by calling query.execute();
+
+Step 3: simpledb.Parser.handleQueryStatement()
+
+First, it gets a logical plan for the query by invoking parseQueryLogicalPlan(). 
+Then, it gets a physical plan by calling physicalPlan() upon the logical plan acquired in the first step.
+After setting the query's logical plan and physical plan, if there's a physical plan, it prints out the plan.
+Finally, it returns a query.
+
+Step 4: simpledb.Parser.parseQueryLogicalPlan()
+
+This method parse the query and returns a logical query plan that is ready to be processed by the optimizer. The logical plan will consist of a collection of table scan nodes, join nodes, filter nodes, a select list, and a group by field. 
+
+First, it goes throught all the tables in FROM clause and add a scan to the plan by calling LogicalPlan.addScan().
+Second, it moves to WHERE clause and create Filter and Join nodes by calling processExpression().
+Then, it moves to GROUP BY clause and get the group by value if exists.
+Next, it moves to SELECT clause, get select list by calling ZQuery.getSelect(), pick out aggregates by calling getAggregate() on each element of the select list, and check for query validity. Aggregates and project fields are added to the logical plan. 
+Then, it moves to ORDER BY clause (if exists) and sorts the data by calling ZQuery.getOrderBy(). OrderBy is added to the logical plan.
+Finally the logical plan is returned.
+
+Step 5: simpledb.LogicalPlan.physicalPlan()
+
+This method converts the given logival plan to a physical plan, represented by a DbIterator. 
+
+First, it iterates through the table (logical scan nodes) and generates SeqScans, checking the validity. 
+Second, it iterates through the filters (logical filter nodes) and generates Filters, checking the validity and calculating the selectivity.
+Then, it creates a JoinOptimizer and uses it to find the optimal plan to order joins. 
+Next, it walks through the select list and determines order in which to project output fields. It gets the TupleDesc of each node, create Aggregator and OrderBy if exists.
+Finally, it returns a Project in which all the output types, fields, and nodes are.
