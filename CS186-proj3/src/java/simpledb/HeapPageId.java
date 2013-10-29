@@ -71,4 +71,9 @@ public class HeapPageId implements PageId {
 
         return data;
     }
+
+    // Added for debugging.
+    public String toString() {
+        return tableId + " " + pgNo;
+    }
 }

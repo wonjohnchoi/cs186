@@ -81,8 +81,11 @@ public class BufferPool {
             timeToPid.put(System.currentTimeMillis(), pid);
         } else {
             for (Map.Entry<Long, PageId> timeAndPid : timeToPid.entrySet()) {
-                if (timeAndPid.getValue() == pid) {
-                    timeToPid.remove(timeAndPid.getKey());
+                if (timeAndPid.getValue().equals(pid)) {
+                    if (timeToPid.remove(timeAndPid.getKey()) == null) {
+                        System.out.println("Should never happen in BufferPool.");
+                        System.exit(1);
+                    }
                     break;
                 }
             }
