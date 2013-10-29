@@ -65,6 +65,11 @@ public class TableStats {
      * histograms.
      */
     static final int NUM_HIST_BINS = 100;
+    private IntHistogram intHist;
+    private StringHistogram strHist;
+    private int ioCostPerPage;
+    private int numPages;
+    private int numTuples;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -77,14 +82,62 @@ public class TableStats {
      *            sequential-scan IO and disk seeks.
      */
     public TableStats(int tableid, int ioCostPerPage) {
-        // For this function, you'll have to get the
-        // DbFile for the table in question,
-        // then scan through its tuples and calculate
-        // the values that you need.
-        // You should try to do this reasonably efficiently, but you don't
-        // necessarily have to (for example) do everything
-        // in a single scan of the table.
-        // some code goes here
+        DbFile df = Database.getCatalog().getDbFile(tableid);
+        DbFileIterator dfIt = df.iterator(null);
+        IntHistogram intHist = null;
+        StringHistogram strHist = null;
+
+        numTuples = 0;
+        try {
+            // pass 1
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
+            dfIt.open();
+            while (dfIt.hasNext()) {
+                Tuple tup = dfIt.next();
+                ++numTuples;
+                Iterator<Field> fieldIt = tup.fields();
+                while (fieldIt.hasNext()) {
+                    Field field = fieldIt.next();
+                    Type type = field.getType();
+                    if (type == Type.INT_TYPE) {
+                        int val = ((IntField) field).getValue();
+                        max = Math.max(max, val);
+                        min = Math.min(min, val);
+                    }
+                }
+            }
+            dfIt.close();
+
+            // pass 2
+            dfIt.open();
+            intHist = new IntHistogram(1000, min, max);
+            strHist = new StringHistogram(1000);
+            while (dfIt.hasNext()) {
+                Tuple tup = dfIt.next();
+                Iterator<Field> fieldIt = tup.fields();
+                while (fieldIt.hasNext()) {
+                    Field field = fieldIt.next();
+                    Type type = field.getType();
+                    if (type == Type.INT_TYPE) {
+                        intHist.addValue(((IntField) field).getValue());
+                    } else if (type == Type.STRING_TYPE) {
+                        strHist.addValue(((StringField) field).getValue());
+                    } else {
+                        System.out.println("Unknown Field Type: " + type);
+                        System.exit(1);
+                    }
+                }
+            }
+        } catch (DbException ex) {
+            ex.printStackTrace();
+        } catch (TransactionAbortedException ex) {
+            ex.printStackTrace();
+        }
+        this.intHist = intHist;
+        this.strHist = strHist;
+        this.ioCostPerPage = ioCostPerPage;
+        this.numPages = ((HeapFile) df).numPages();
     }
 
     /**
@@ -100,8 +153,7 @@ public class TableStats {
      * @return The estimated cost of scanning the table.
      */
     public double estimateScanCost() {
-        // some code goes here
-        return 0;
+        return ioCostPerPage * numPages;
     }
 
     /**
@@ -114,8 +166,7 @@ public class TableStats {
      *         selectivityFactor
      */
     public int estimateTableCardinality(double selectivityFactor) {
-        // some code goes here
-        return 0;
+        return (int) (numTuples * selectivityFactor);
     }
 
     /**
@@ -147,8 +198,17 @@ public class TableStats {
      *         predicate
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
-        // some code goes here
-        return 1.0;
+        Type type = constant.getType();
+        double selectivity = -1;
+        if (type == Type.INT_TYPE) {
+            selectivity = intHist.estimateSelectivity(op, ((IntField) constant).getValue());
+        } else if (type == Type.STRING_TYPE) {
+            selectivity = strHist.estimateSelectivity(op, ((StringField) constant).getValue());
+        } else {
+            System.out.println("Unknown Type: " + type);
+            System.exit(1);
+        }
+        return selectivity;
     }
 
     /**
