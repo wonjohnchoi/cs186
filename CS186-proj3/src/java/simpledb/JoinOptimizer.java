@@ -227,13 +227,46 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
+        /*
+          1. j = set of join nodes
+          2. for (i in 1...|j|):  // First find best plan for single join, then for two joins, etc. 
+          3.     for s in {all length i subsets of j} // Looking at a concrete subset of joins
+          4.       bestPlan = {}  // We want to find the best plan for this concrete subset 
+          5.       for s' in {all length i-1 subsets of s} 
+          6.            subplan = optjoin(s')  // Look-up in the cache the best query plan for s but with one relation missing
+          7.            plan = best way to join (s-s') to subplan // Now find the best plan to extend s' by one join to get s
+          8.            if (cost(plan) < cost(bestPlan))
+          9.               bestPlan = plan // Update the best plan for computing s
+          10.      optjoin(s) = bestPlan
+          11. return optjoin(j)
+        */
 
-        // See the project writeup for some hints as to how this function
-        // should work.
+        PlanCache pCache = new PlanCache();
+        for (int i = 1; i <= joins.size(); i++) {
+            Set<Set<LogicalJoinNode>> subsets = enumerateSubsets(joins, i);
+            for (Set<LogicalJoinNode> subset : subsets) {
+                // TODO: calculate the best plan for the subset?
+                for (LogicalJoinNode subplan : subset) {
+                    // since there hasn't been any bestPlan so far, pass Double.MAX_VALUE for bestCostSoFar
+                    CostCard bestPlan = computeCostAndCardOfSubplan(stats, filterSelectivities, subplan, subset, Double.MAX_VALUE, pCache);
+                    if (bestPlan != null) {
+                        pCache.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
+                    }
+                }
+            }
+        }
+        // explain the join plan
+        if (explain) {
+            printJoins(joins, pCache, stats, filterSelectivities);
+        }
+        // now start calculating the optimal join plan
+        HashSet<LogicalJoinNode> joinSet = new HashSet<LogicalJoinNode>();
+        for (LogicalJoinNode join : joins) {
+            joinSet.add(join);
+        }
+        // return optjoin(j)
+        return pCache.getOrder(joinSet);
 
-        // some code goes here
-        //Replace the following
-        return joins;
     }
 
     // ===================== Private Methods =================================
