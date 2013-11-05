@@ -246,27 +246,32 @@ public class JoinOptimizer {
             Set<Set<LogicalJoinNode>> subsets = enumerateSubsets(joins, i);
             for (Set<LogicalJoinNode> subset : subsets) {
                 // TODO: calculate the best plan for the subset?
+                CostCard bestPlan = new CostCard();
+                // since we haven't computed any, set bestPlan's cost as Double.MAX_VALUE
+                bestPlan.cost = Double.MAX_VALUE;
                 for (LogicalJoinNode subplan : subset) {
-                    // since there hasn't been any bestPlan so far, pass Double.MAX_VALUE for bestCostSoFar
-                    CostCard bestPlan = computeCostAndCardOfSubplan(stats, filterSelectivities, subplan, subset, Double.MAX_VALUE, pCache);
-                    if (bestPlan != null) {
-                        pCache.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
+                    CostCard plan = computeCostAndCardOfSubplan(stats, filterSelectivities, subplan, subset, bestPlan.cost, pCache);
+                    if (plan != null && plan.cost < bestPlan.cost) {
+                        bestPlan = plan;
                     }
                 }
+                pCache.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
             }
         }
-        // explain the join plan
-        if (explain) {
-            printJoins(joins, pCache, stats, filterSelectivities);
-        }
-        // now start calculating the optimal join plan
+
+        // make a set of joins for optjoin to calculate the optimal join plan
         HashSet<LogicalJoinNode> joinSet = new HashSet<LogicalJoinNode>();
         for (LogicalJoinNode join : joins) {
             joinSet.add(join);
         }
+        
+        // explain the join plan if needed
+        if (explain) {
+            printJoins(joins, pCache, stats, filterSelectivities);
+        }
+
         // return optjoin(j)
         return pCache.getOrder(joinSet);
-
     }
 
     // ===================== Private Methods =================================
