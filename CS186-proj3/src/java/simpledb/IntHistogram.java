@@ -85,7 +85,7 @@ public class IntHistogram {
                 + estimateSelectivity(LESS_THAN, v);
         }
         
-        if (op == EQUALS) {
+        if (op == EQUALS || op == LIKE) {
             if (v < min || v > max) {
                 return 0;
             }
@@ -96,9 +96,8 @@ public class IntHistogram {
             if (v > max) return 1;
             else if (v <= min) return 0;
         }
-        // TODO(wonjohn): fix above if we decide to support more operations.
 
-        double selectivity;
+        double selectivity = -1;
         int idx = getBucketIdx(v);
         int start = (int) Math.ceil(min + bucketSize * idx);
         double endTmp = min + bucketSize * (idx + 1);
@@ -109,7 +108,7 @@ public class IntHistogram {
         // w will never be equal to 0 because v belongs in this bucket.
         double w = Math.floor(end) - Math.ceil(start) + 1;
 
-        if (op == EQUALS) {
+        if (op == EQUALS || op == LIKE) {
             selectivity = ((double) h / w) / ntups;
         } else if (op == GREATER_THAN) {
             selectivity = (double) h / ntups * (end - v) / w;
@@ -121,9 +120,6 @@ public class IntHistogram {
             for (int i = 0; i < idx; ++i) {
                 selectivity += (double) buckets[i] / ntups;
             }
-        } else {
-            // TODO(wonjohn): implement this if necessary.
-            throw new UnsupportedOperationException("Didn't implement this operator: " + op);
         }
         return selectivity;
     }
