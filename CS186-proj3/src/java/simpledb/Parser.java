@@ -556,6 +556,7 @@ public class Parser {
                         throw new ParsingException((Exception) a);
                     if (a instanceof Zql.TokenMgrError)
                         throw (Zql.TokenMgrError) a;
+                    a.printStackTrace();
                     throw new DbException(a.getMessage());
                 } finally {
                     if (!inUserTrans)
