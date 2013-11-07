@@ -1,3 +1,5 @@
+Answer the questions in Exercise 1 and Exercise 6.
+EXERCISE 1
 <The Life of Query>
 
 Step 1: simpledb.Parser.main() and simpledb.Parser.start()
@@ -42,3 +44,39 @@ Second, it iterates through the filters (logical filter nodes) and generates Fil
 Then, it creates a JoinOptimizer and uses it to find the optimal plan to order joins. 
 Next, it walks through the select list and determines order in which to project output fields. It gets the TupleDesc of each node, create Aggregator and OrderBy if exists.
 Finally, it returns a Project in which all the output types, fields, and nodes are.
+
+EXERCISE 6.1
+We ran the given query against 1% dataset. No rows are returned.
+The following query plan is selected:
+The query plan is:
+                           ??(d.fname,d.lname),card:29729
+                            |
+                           ???(a.id=c.pid),card:29729
+  __________________________|___________________________
+  |                                                    |
+ ??(a.lname=Spicer),card:1                            ???(m.mid=c.mid),card:29729
+  |                                    ________________|_________________
+ ??(a.fname=John),card:1               |                                |
+  |                                   ???(d.id=m.did),card:2791         |
+  |                           _________|_________                       |
+  |                           |                 |                     scan(Casts c)
+scan(Actor a)               scan(Director d)  scan(Movie_Director m)
+
+
+TODO(wonjohn): insert why above plan happened.
+
+EXERCISE 6.2
+
+TODO(wonjohn): will fill this.
+
+Discuss and justify any changes you made to the API.
+-
+
+Describe any missing or incomplete elements of your code.
+- There is no missing or incomplete elements in our code.
+
+Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
+- Wonjohn spent hours
+- Wonjohn did not find anything particularly difficult or confusing.
+- Jisoo spent hours
+- 
