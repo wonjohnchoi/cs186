@@ -244,7 +244,8 @@ public class JoinOptimizer {
         PlanCache pCache = new PlanCache();
         // This accounts for situations in which
         // there is no joins in the query.
-        pCache.addPlan(new HashSet<LogicalJoinNode>(), Double.MAX_VALUE, 0, new Vector<LogicalJoinNode>());
+        if (joins.size() == 0)
+            pCache.addPlan(new HashSet<LogicalJoinNode>(), Double.MAX_VALUE, 0, new Vector<LogicalJoinNode>());
         for (int i = 1; i <= joins.size(); i++) {
             Set<Set<LogicalJoinNode>> subsets = enumerateSubsets(joins, i);
             for (Set<LogicalJoinNode> subset : subsets) {
