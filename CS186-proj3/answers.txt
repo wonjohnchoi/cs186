@@ -1,4 +1,7 @@
-Answer the questions in Exercise 1 and Exercise 6.
+Wonjohn Choi (cs186-de)
+Jisoo Kim (cs186-if)
+
+1. Answer the questions in Exercise 1 and Exercise 6.
 EXERCISE 1
 <The Life of Query>
 
@@ -69,13 +72,13 @@ EXERCISE 6.2
 
 TODO(wonjohn): will fill this.
 
-Discuss and justify any changes you made to the API.
+2. Discuss and justify any changes you made to the API.
 -
 
-Describe any missing or incomplete elements of your code.
+3. Describe any missing or incomplete elements of your code.
 - There is no missing or incomplete elements in our code.
 
-Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
+4. Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
 - Wonjohn spent hours
 - Wonjohn did not find anything particularly difficult or confusing.
 - Jisoo spent hours
