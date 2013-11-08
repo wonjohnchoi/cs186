@@ -49,6 +49,7 @@ Next, it walks through the select list and determines order in which to project 
 Finally, it returns a Project in which all the output types, fields, and nodes are.
 
 EXERCISE 6.1
+
 We ran the given query against 1% dataset. No rows are returned.
 The following query plan is selected:
 The query plan is (note that my editor seems not to support some greek character. ? represents some greek letters but a TA said it's fine on Piazza):
@@ -123,5 +124,5 @@ Also, the resulting large table is then joined with Casts (which has 29729 rows)
 4. Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
 - Wonjohn spent about 10 hours
 - Wonjohn did not find anything particularly difficult or confusing.
-- Jisoo spent approximately 3 hours.
+- Jisoo spent approximately 7 hours.
 - Jisoo did not find anything particularly difficult or confusing.

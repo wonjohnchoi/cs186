@@ -267,14 +267,16 @@ public class JoinOptimizer {
         for (LogicalJoinNode join : joins) {
             joinSet.add(join);
         }
+	
+	Vector<LogicalJoinNode> optjoins = optjoin.getOrder(joinSet);
         
         // explain the join plan if needed
         if (explain) {
-            printJoins(joins, optjoin, stats, filterSelectivities);
+            printJoins(optjoins, optjoin, stats, filterSelectivities);
         }
 
         // return optjoin(j)
-        return optjoin.getOrder(joinSet);
+        return optjoins;
     }
 
     // ===================== Private Methods =================================

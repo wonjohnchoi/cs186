@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.lang.Math;
 
 /**
  * TableStats represents statistics (e.g., histograms) about base tables in a
@@ -171,7 +172,7 @@ public class TableStats {
      *         selectivityFactor
      */
     public int estimateTableCardinality(double selectivityFactor) {
-        return (int) (numTuples * selectivityFactor);
+        return (int)Math.ceil(numTuples * selectivityFactor);
     }
 
     /**
