@@ -155,7 +155,7 @@ public class JoinOptimizer {
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
-        if(joinOp.equals(Predicate.Op.EQUALS) || joinOp.equals(Predicate.Op.NOT_EQUALS)) {
+        if(joinOp.equals(Predicate.Op.EQUALS) || joinOp.equals(Predicate.Op.NOT_EQUALS) || joinOp.equals(Predicate.Op.LIKE)) {
             if(t1pkey) {
                 return card2;
             } else if(t2pkey) {

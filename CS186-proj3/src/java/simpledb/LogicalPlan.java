@@ -384,7 +384,7 @@ public class LogicalPlan {
             DbIterator j;
             j = jo.instantiateJoin(lj,plan1,plan2);
             subplanMap.put(t1name, j);
-
+            System.out.println("prev: "+subplanMap);
             if (!isSubqueryJoin) {
                 subplanMap.remove(t2name);
                 equivMap.put(t2name,t1name);  //keep track of the fact that this new node contains both tables
@@ -405,7 +405,7 @@ public class LogicalPlan {
         if (subplanMap.size() > 1) {
             throw new ParsingException("Query does not include join expressions joining all nodes!");
         }
-        
+
         DbIterator node =  (DbIterator)(subplanMap.entrySet().iterator().next().getValue());
 
         //walk the select list, to determine order in which to project output fields

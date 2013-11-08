@@ -51,7 +51,7 @@ Finally, it returns a Project in which all the output types, fields, and nodes a
 EXERCISE 6.1
 We ran the given query against 1% dataset. No rows are returned.
 The following query plan is selected:
-The query plan is:
+The query plan is (note that my editor seems not to support some greek character. ? represents some greek letters but a TA said it's fine on Piazza):
                            ??(d.fname,d.lname),card:29729
                             |
                            ???(a.id=c.pid),card:29729
@@ -65,8 +65,54 @@ The query plan is:
   |                           |                 |                     scan(Casts c)
 scan(Actor a)               scan(Director d)  scan(Movie_Director m)
 
+This plan is selected because it seems to have the least cost (I did not do thorough calculation though).
+Actor is first filtered by lname=Spicer and fname=John because the operation
+only involves one table, so it can be done cheaper when the table was not joined with other table.
+The resulting table's cardinality is estimated to be 1 because there are countless number of strings
+that a.lname and a.fname can be. It is very unlikely for them to be exactly "Spicer" and "John".
+With simple sql querying, we found that
+- Casts has 29629 rows,
+- Director has 2597 row,
+- Movie_Director has 2791 rows.
+Since our implementation estimate the join cost to be "(cost1 + (card1 * cost2) + (card1 * card2)),"
+to minimize the join cost, we need to join tables with smaller sizes first. Hence, we join Casts
+as late as possible. Since Movie Director can either be joined with Casts or Director,
+it joins with (smaller-sized) Director first.
+Since Actor has a join condition with Casts, it is joined with Casts at the late moment.
 
-TODO(wonjohn): insert why above plan happened.
+EXERCISE 6.2
+Then, we ran the following query:
+select a.fname, a.lname, a2.fname, a2.lname from Actor a, Actor a2, Casts c, Casts c2 where a.lname = 'Choi' and a2.id = c2.pid and a.id=c.pid and c.mid = c2.mid;
+
+The query selects the name of an actor whose last name is 'Choi' and a list of actors who worked with the actor in a movie.
+The query plan was:
+                         ??(a.fname,a.lname,a2.fname,a2.lname),card:29729
+                          |
+                         ???(a.id=c.pid),card:29729
+  ________________________|_________________________
+  |                                                |
+ ??(a.lname=Choi),card:1                          ???(c2.mid=c.mid),card:29729
+  |                                 _______________|________________
+  |                                 |                              |
+  |                                ???(a2.id=c2.pid),card:29729    |
+  |                         ________|________                      |
+  |                         |               |                    scan(Casts c)
+scan(Actor a)             scan(Actor a2)  scan(Casts c2)
+
+Actor is first filtered by lname=Choi becuase filter operation
+only involves one table, so it can be done cheaper when the table was not joined with other table.
+With simple sql querying, we found that
+- Casts has 29629 rows,
+- Director has 2597 row,
+- Movie_Director has 2791 rows.
+- Actor has 26026 rows;
+
+Here, I disagree with the plan. I think it would be more efficient if the filtered Actor
+is joined with Casts first because there would be only a limited number of Casts in which
+the actor participated in. Then, the cardinality of resulting table would be very low.
+If another Actor table is then joined with the resulting table, the whole plan would be very cheap.
+But the plan joins Actor table (unfiltered) with Casts first, so the resulting cardinality is very large (29729).
+
 
 EXERCISE 6.2
 
