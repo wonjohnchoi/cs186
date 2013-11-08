@@ -25,7 +25,7 @@ Step 3: simpledb.Parser.handleQueryStatement()
 First, it gets a logical plan for the query by invoking parseQueryLogicalPlan(). 
 Then, it gets a physical plan by calling physicalPlan() upon the logical plan acquired in the first step.
 After setting the query's logical plan and physical plan, if there's a physical plan, it prints out the plan.
-Finally, it returns a query.
+Finally, it returns the query.
 
 Step 4: simpledb.Parser.parseQueryLogicalPlan()
 
@@ -119,7 +119,7 @@ EXERCISE 6.2
 TODO(wonjohn): will fill this.
 
 2. Discuss and justify any changes you made to the API.
--
+- Haven't made any changes to the API.
 
 3. Describe any missing or incomplete elements of your code.
 - There is no missing or incomplete elements in our code.
@@ -127,5 +127,5 @@ TODO(wonjohn): will fill this.
 4. Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
 - Wonjohn spent hours
 - Wonjohn did not find anything particularly difficult or confusing.
-- Jisoo spent hours
-- 
+- Jisoo spent approximately 3 hours.
+- Jisoo did not find anything particularly difficult or confusing.

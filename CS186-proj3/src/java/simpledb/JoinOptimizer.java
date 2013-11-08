@@ -107,10 +107,6 @@ public class JoinOptimizer {
             // You do not need to implement proper support for these for Project 3.
             return card1 + cost1 + cost2;
         } else {
-            // some code goes here.
-            // HINT: You may need to use the variable "j" if you implemented
-            // a join algorithm that's more complicated than a basic nested-loops
-            // join.
             // used formula mentioned in spec
             return (cost1 + (card1 * cost2) + (card1 * card2));
         }
@@ -160,7 +156,7 @@ public class JoinOptimizer {
                 return card2;
             } else if(t2pkey) {
                 return card1;
-            } else if(card1 >= card2) {
+            } else if(card1 >= card2) { // when there is no primary key, use the size of the larger of the two tables
                 return card1;
             } else if(card2 >= card1) {
                 return card2;
@@ -228,6 +224,8 @@ public class JoinOptimizer {
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
         /*
+          We just followed the given pseudocode:
+
           1. j = set of join nodes
           2. for (i in 1...|j|):  // First find best plan for single join, then for two joins, etc. 
           3.     for s in {all length i subsets of j} // Looking at a concrete subset of joins
@@ -241,25 +239,28 @@ public class JoinOptimizer {
           11. return optjoin(j)
         */
 
-        PlanCache pCache = new PlanCache();
+        PlanCache optjoin = new PlanCache();
         // This accounts for situations in which
         // there is no joins in the query.
+<<<<<<< HEAD
         if (joins.size() == 0)
             pCache.addPlan(new HashSet<LogicalJoinNode>(), Double.MAX_VALUE, 0, new Vector<LogicalJoinNode>());
+=======
+        optjoin.addPlan(new HashSet<LogicalJoinNode>(), Double.MAX_VALUE, 0, new Vector<LogicalJoinNode>());
+>>>>>>> 6038025d5225632e662e522e5d5ad03e08f2d485
         for (int i = 1; i <= joins.size(); i++) {
             Set<Set<LogicalJoinNode>> subsets = enumerateSubsets(joins, i);
             for (Set<LogicalJoinNode> subset : subsets) {
-                // TODO: calculate the best plan for the subset?
                 CostCard bestPlan = new CostCard();
                 // since we haven't computed any, set bestPlan's cost as Double.MAX_VALUE
                 bestPlan.cost = Double.MAX_VALUE;
                 for (LogicalJoinNode subplan : subset) {
-                    CostCard plan = computeCostAndCardOfSubplan(stats, filterSelectivities, subplan, subset, bestPlan.cost, pCache);
+                    CostCard plan = computeCostAndCardOfSubplan(stats, filterSelectivities, subplan, subset, bestPlan.cost, optjoin);
                     if (plan != null && plan.cost < bestPlan.cost) {
                         bestPlan = plan;
                     }
                 }
-                pCache.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
+                optjoin.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
             }
         }
 
@@ -271,11 +272,11 @@ public class JoinOptimizer {
         
         // explain the join plan if needed
         if (explain) {
-            printJoins(joins, pCache, stats, filterSelectivities);
+            printJoins(joins, optjoin, stats, filterSelectivities);
         }
 
         // return optjoin(j)
-        return pCache.getOrder(joinSet);
+        return optjoin.getOrder(joinSet);
     }
 
     // ===================== Private Methods =================================
