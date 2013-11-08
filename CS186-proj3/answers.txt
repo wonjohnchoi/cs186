@@ -80,6 +80,7 @@ to minimize the join cost, we need to join tables with smaller sizes first. Henc
 as late as possible. Since Movie Director can either be joined with Casts or Director,
 it joins with (smaller-sized) Director first.
 Since Actor has a join condition with Casts, it is joined with Casts at the late moment.
+However, this query plan is against my intuition. I think it would be better if Casts is joined with filtered Actor before it's joined with other tables, because then it will have much lower cardinality.
 
 EXERCISE 6.2
 Then, we ran the following query:
@@ -124,5 +125,5 @@ Also, the resulting large table is then joined with Casts (which has 29729 rows)
 4. Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
 - Wonjohn spent about 10 hours
 - Wonjohn did not find anything particularly difficult or confusing.
-- Jisoo spent approximately 7 hours.
+- Jisoo spent approximately 9 hours.
 - Jisoo did not find anything particularly difficult or confusing.
