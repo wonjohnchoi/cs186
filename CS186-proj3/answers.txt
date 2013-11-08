@@ -108,15 +108,11 @@ With simple sql querying, we found that
 - Actor has 26026 rows;
 
 Here, I disagree with the plan. I think it would be more efficient if the filtered Actor
-is joined with Casts first because there would be only a limited number of Casts in which
+is joined with Casts before Casts was joined with other tables because there are only a few number of Casts in which
 the actor participated in. Then, the cardinality of resulting table would be very low.
-If another Actor table is then joined with the resulting table, the whole plan would be very cheap.
+If other tables are then joined with the resulting table, the whole plan would be very cheap.
 But the plan joins Actor table (unfiltered) with Casts first, so the resulting cardinality is very large (29729).
-
-
-EXERCISE 6.2
-
-TODO(wonjohn): will fill this.
+Also, the resulting large table is then joined with Casts (which has 29729 rows), so the plan is expensive.
 
 2. Discuss and justify any changes you made to the API.
 - Haven't made any changes to the API.
@@ -125,7 +121,7 @@ TODO(wonjohn): will fill this.
 - There is no missing or incomplete elements in our code.
 
 4. Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
-- Wonjohn spent hours
+- Wonjohn spent about 10 hours
 - Wonjohn did not find anything particularly difficult or confusing.
 - Jisoo spent approximately 3 hours.
 - Jisoo did not find anything particularly difficult or confusing.
