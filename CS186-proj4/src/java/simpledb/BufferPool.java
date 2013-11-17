@@ -2,6 +2,8 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -27,6 +29,8 @@ public class BufferPool {
     // to pageid. Used to find pageid that is
     // least recently used.
     private TreeMap<Long, PageId> timeToPid;
+    // Manages locks
+    private Locks locks;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -37,6 +41,7 @@ public class BufferPool {
         this.numPages = numPages;
         pidToPage = new HashMap<PageId, Page>();
         timeToPid = new TreeMap<Long, PageId>();
+        locks = new Locks();
     }
 
     /**
@@ -91,6 +96,13 @@ public class BufferPool {
             }
             timeToPid.put(System.currentTimeMillis(), pid);
         }
+        
+        if (perm.equals(Permissions.READ_ONLY)) {
+            while (!locks.acquire(tid, pid, true)) {}
+        } else {
+            while (!locks.acquire(tid, pid, false)) {}
+        }
+       
         return pidToPage.get(pid);
     }
 
@@ -104,8 +116,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public  void releasePage(TransactionId tid, PageId pid) {
-        // some code goes here
-        // not necessary for proj1
+        locks.release(tid, pid);
     }
 
     /**
@@ -122,13 +133,13 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for proj1
-        return false;
+        return locks.holdsLock(tid, p);
     }
 
     /**
      * Commit or abort a given transaction; release all locks associated to
      * the transaction.
-     *
+ n     *
      * @param tid the ID of the transaction requesting the unlock
      * @param commit a flag indicating whether we should commit or abort
      */
@@ -245,4 +256,64 @@ public class BufferPool {
         }
     }
 
+    // private class that manages the locks
+    private class Locks {
+        ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>> locks;
+        ConcurrentHashMap<PageId, Boolean> exclusiveLocks;
+        // constructor
+        private Locks() {
+            locks = new ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>>();
+            exclusiveLocks = new ConcurrentHashMap<PageId, Boolean>();
+        }
+        
+        // acquire the lock for the specific page. Returns true if the lock is acquired.
+        private synchronized boolean acquire(TransactionId tid, PageId pid, boolean exc) {
+            // acquire the lock for the specific page
+            ConcurrentLinkedQueue<TransactionId> tids = locks.get(pid);
+            Boolean exclusive = exclusiveLocks.get(pid);
+            if (exclusive != null && exclusive) {
+                return false;
+            }
+            if (exc) {
+                if (exclusive != null && exclusive) {
+                    return false;
+                } else {
+                    exclusiveLocks.put(pid, true);
+                }
+            }   
+            if (tids == null) {
+                tids = new ConcurrentLinkedQueue<TransactionId>();
+                tids.add(tid);
+                locks.put(pid, tids);
+            } else {
+                tids.add(tid);
+                locks.put(pid, tids);
+            }
+            return true;
+        }
+
+        // release the lock.
+        private synchronized void release(TransactionId tid, PageId pid) {
+            ConcurrentLinkedQueue<TransactionId> tids = locks.get(pid);
+            Boolean exclusive = exclusiveLocks.get(pid);
+            if (tids.size() == 1) {
+                locks.put(pid, null);
+                // the lock is no longer exclusive
+                exclusiveLocks.put(pid, false);
+            } else {
+                tids.remove(tid);
+                locks.put(pid, tids);
+            }
+        }
+
+        private synchronized boolean holdsLock(TransactionId tid, PageId pid) {
+            ConcurrentLinkedQueue tids = locks.get(pid);
+            if (tids != null) {
+                if (tids.contains(tid)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
