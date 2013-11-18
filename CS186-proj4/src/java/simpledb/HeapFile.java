@@ -167,6 +167,7 @@ public class HeapFile implements DbFile {
         } else {
             freePages.put(freePage.getId().pageNumber(), false);
         }
+        Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), numPages()));
         modPages.add(freePage);
         return modPages;
     }

@@ -97,12 +97,12 @@ public class BufferPool {
             timeToPid.put(System.currentTimeMillis(), pid);
         }
         boolean acquired = false;
-        if (perm.equals(Permissions.READ_ONLY)) {
+        if (perm.equals(Permissions.READ_ONLY)) { // acquire shared lock
             acquired = locks.acquire(tid, pid, false);
             while (!acquired) {
                 acquired = locks.acquire(tid, pid, false);
             }
-        } else {
+        } else { // acquire exclusive lock
             acquired = locks.acquire(tid, pid, true);
             while (!acquired) {
                 acquired = locks.acquire(tid, pid, true);
@@ -261,72 +261,69 @@ public class BufferPool {
             System.exit(1);
         }
     }
-
+    
     // private class that manages the locks
     private class Locks {
-        ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>> locks;
-        ConcurrentHashMap<PageId, Boolean> exclusiveLocks;
+        ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>> shared;
+        ConcurrentHashMap<PageId, TransactionId> exclusive;
+        boolean excl = false;
         // constructor
         private Locks() {
-            locks = new ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>>();
-            exclusiveLocks = new ConcurrentHashMap<PageId, Boolean>();
+            shared = new ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>>();
+            exclusive = new ConcurrentHashMap<PageId, TransactionId>();
         }
         
         // acquire the lock for the specific page. Returns true if the lock is acquired.
         private synchronized boolean acquire(TransactionId tid, PageId pid, boolean exc) {
             // acquire the lock for the specific page
-            ConcurrentLinkedQueue<TransactionId> tids = locks.get(pid);
-            Boolean exclusive = exclusiveLocks.get(pid);
-            if (exclusive != null && exclusive) {
-                return false;
-            }
-            if (exc) {
-                //System.out.println("trying to acquire exclusive lock");
-                if (tids == null) {
-                    tids = new ConcurrentLinkedQueue<TransactionId>();
-                    tids.add(tid);
-                    //exclusiveLocks.put(pid, true);
+            if (tid != null && pid != null) {
+                ConcurrentLinkedQueue<TransactionId> tids = shared.get(pid);
+                TransactionId excTid = exclusive.get(pid);   
+                if (exc) { // handles exclusive lock
+                    if (tids != null && ((tids.size() == 1 && !tids.contains(tid)) || tids.size() > 1)) {
+                        return false;
+                    }
+                    if (excTid != null && !excTid.equals(tid)) {
+                        return false;
+                    }
+                    exclusive.put(pid, tid);
                     return true;
-                } else {
-                    return false;
+                } else { // handles shared lock
+                    if (excTid == null || excTid.equals(tid)) {
+                        if (tids == null) {
+                            tids = new ConcurrentLinkedQueue<TransactionId>();
+                        } 
+                        tids.add(tid);
+                        shared.put(pid, tids);
+                        return true;
+                    }
                 }
-            } 
-            if (tids == null) {
-                //System.out.println("first element");
-                tids = new ConcurrentLinkedQueue<TransactionId>();
             }
-            tids.add(tid);
-            locks.put(pid, tids);
-            return true;
+            return false;
         }
 
         // release the lock.
         private synchronized void release(TransactionId tid, PageId pid) {
-            //System.out.println("start releasing");
-            ConcurrentLinkedQueue<TransactionId> tids = locks.get(pid);
-            Boolean exclusive = exclusiveLocks.get(pid);
+            ConcurrentLinkedQueue<TransactionId> tids = shared.get(pid);
+            TransactionId excTid = exclusive.get(pid);
             if (tids != null) {
-                if (tids.size() == 1) {
-                    locks.remove(pid);
-                    // the lock is no longer exclusive
-                    exclusiveLocks.put(pid, false);
-                } else {
-                    tids.remove(tid);
-                    locks.put(pid, tids);
-                }
+                tids.remove(tid);
+                shared.put(pid, tids);
             }
-            //System.out.println("finished releasing");
+            exclusive.remove(pid);
         }
 
         private synchronized boolean holdsLock(TransactionId tid, PageId pid) {
-            System.out.println("start checking");
-            ConcurrentLinkedQueue tids = locks.get(pid);
-            if (tids != null) {
+            ConcurrentLinkedQueue tids = shared.get(pid);
+            TransactionId excTid = exclusive.get(pid);
+            if (tids != null) { // checks for shared lock
                 if (tids.contains(tid)) {
                     return true;
                 }
             }
-            System.out.println("finished checking");
+            if (excTid != null) { // checks for exclusive lock
+                return true;
+            }
             return false;
         }
     }
