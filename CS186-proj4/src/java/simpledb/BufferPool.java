@@ -29,8 +29,12 @@ public class BufferPool {
     // to pageid. Used to find pageid that is
     // least recently used.
     private TreeMap<Long, PageId> timeToPid;
+    // Keep track of the dirty pages
+    private HashSet<PageId> dirtyPages;
     // Manages locks
     private Locks locks;
+    // map tid to the list of pid's the transaction is using
+    private HashMap<TransactionId, LinkedList<PageId>> tidToPids;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -41,7 +45,9 @@ public class BufferPool {
         this.numPages = numPages;
         pidToPage = new HashMap<PageId, Page>();
         timeToPid = new TreeMap<Long, PageId>();
+        dirtyPages = new HashSet<PageId>();
         locks = new Locks();
+        tidToPids = new HashMap<TransactionId, LinkedList<PageId>>();
     }
 
     /**
@@ -59,7 +65,7 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+    public synchronized Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // TODO(wonjohn): Should we ignore tid and perm?
         // For now, yes; see https://piazza.com/class/hhrd9gio9n21s5?cid=70
@@ -108,7 +114,12 @@ public class BufferPool {
                 acquired = locks.acquire(tid, pid, true);
             }
         }
-       
+        LinkedList<PageId> pids = tidToPids.get(tid);
+        if (pids == null) {
+            pids = new LinkedList<PageId>();
+        }
+        pids.add(pid);
+        tidToPids.put(tid, pids);
         return pidToPage.get(pid);
     }
 
@@ -121,7 +132,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param pid the ID of the page to unlock
      */
-    public  void releasePage(TransactionId tid, PageId pid) {
+    public synchronized void releasePage(TransactionId tid, PageId pid) {
         locks.release(tid, pid);
     }
 
@@ -130,15 +141,13 @@ public class BufferPool {
      *
      * @param tid the ID of the transaction requesting the unlock
      */
-    public void transactionComplete(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+    public synchronized void transactionComplete(TransactionId tid) throws IOException {
+        flushPages(tid);
+        locks.releaseLocks(tid);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
-    public boolean holdsLock(TransactionId tid, PageId p) {
-        // some code goes here
-        // not necessary for proj1
+    public synchronized boolean holdsLock(TransactionId tid, PageId p) {
         return locks.holdsLock(tid, p);
     }
 
@@ -149,10 +158,24 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param commit a flag indicating whether we should commit or abort
      */
-    public void transactionComplete(TransactionId tid, boolean commit)
+    public synchronized void transactionComplete(TransactionId tid, boolean commit)
         throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        if (commit) { // commit
+            transactionComplete(tid);
+        } else { // abort
+            LinkedList<PageId> pids = tidToPids.get(tid);
+            for (PageId pid : pids) {
+                if (dirtyPages.contains(pid)) {
+                    Page page = pidToPage.get(pid);
+                    if (page.isDirty().equals(tid)) {
+                        page.setBeforeImage();
+                        Page recovery = page.getBeforeImage();
+                        pidToPage.put(pid, recovery);
+                    }
+                }
+            }
+            locks.releaseLocks(tid);
+        }
     }
 
     /**
@@ -169,10 +192,15 @@ public class BufferPool {
      * @param tableId the table to add the tuple to
      * @param t the tuple to add
      */
-    public void insertTuple(TransactionId tid, int tableId, Tuple t)
+    public synchronized void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
         DbFile file = Database.getCatalog().getDbFile(tableId);
         file.insertTuple(tid, t);
+    }
+
+    // add a page to the dirty page set
+    public synchronized void addDirtyPage(PageId pid) {
+        dirtyPages.add(pid);
     }
 
     /**
@@ -188,7 +216,7 @@ public class BufferPool {
      * @param tid the transaction adding the tuple.
      * @param t the tuple to add
      */
-    public  void deleteTuple(TransactionId tid, Tuple t)
+    public synchronized void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, TransactionAbortedException {
         PageId pid = t.getRecordId().getPageId();
         DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
@@ -235,20 +263,32 @@ public class BufferPool {
     /** Write all pages of the specified transaction to disk.
      */
     public synchronized  void flushPages(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        LinkedList<PageId> pids = tidToPids.get(tid);
+        for (PageId pid : pids) {
+            flushPage(pid);
+        }
     }
 
     /**
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized  void evictPage() throws DbException {
-        Map.Entry<Long, PageId> timeAndPid = timeToPid.pollFirstEntry();
-        if (timeAndPid == null) {
+    private synchronized void evictPage() throws DbException {
+        Map.Entry<Long, PageId> timeAndPid = null;
+        PageId pid = null;
+        // picking the page that is not dirty
+        while (timeToPid.size() > 0) {
+            timeAndPid = timeToPid.pollFirstEntry();
+            if (!dirtyPages.contains(timeAndPid.getValue())) {
+                pid = timeAndPid.getValue();
+                break;
+            }
+        }
+        // if all pages are dirty, throw DbException
+        if (pid == null) {
             throw new DbException("No page to evict!");
         }
-        PageId pid = timeAndPid.getValue();
+        //PageId pid = timeAndPid.getValue();
         // flush before removing pid from pidToPage because flush uses pid.
         try {
             flushPage(pid);
@@ -264,13 +304,17 @@ public class BufferPool {
     
     // private class that manages the locks
     private class Locks {
+        // shared locks
         ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>> shared;
+        // exclusive locks
         ConcurrentHashMap<PageId, TransactionId> exclusive;
-        boolean excl = false;
+        // map tid to the list of locks the transaction is holding
+        ConcurrentHashMap<TransactionId, ConcurrentLinkedQueue<PageId>> tidLocks;
         // constructor
         private Locks() {
             shared = new ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>>();
             exclusive = new ConcurrentHashMap<PageId, TransactionId>();
+            tidLocks = new ConcurrentHashMap<TransactionId, ConcurrentLinkedQueue<PageId>>();
         }
         
         // acquire the lock for the specific page. Returns true if the lock is acquired.
@@ -287,6 +331,12 @@ public class BufferPool {
                         return false;
                     }
                     exclusive.put(pid, tid);
+                    ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
+                    if (pids == null) {
+                        pids = new ConcurrentLinkedQueue<PageId>();
+                    }
+                    pids.add(pid);
+                    tidLocks.put(tid, pids); 
                     return true;
                 } else { // handles shared lock
                     if (excTid == null || excTid.equals(tid)) {
@@ -295,6 +345,12 @@ public class BufferPool {
                         } 
                         tids.add(tid);
                         shared.put(pid, tids);
+                        ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
+                        if (pids == null) {
+                            pids = new ConcurrentLinkedQueue<PageId>();
+                        }
+                        pids.add(pid);
+                        tidLocks.put(tid, pids); 
                         return true;
                     }
                 }
@@ -311,6 +367,14 @@ public class BufferPool {
                 shared.put(pid, tids);
             }
             exclusive.remove(pid);
+        }
+
+        private synchronized void releaseLocks(TransactionId tid) {
+            ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
+            for (PageId pid : pids) {
+                release(tid, pid);
+            }
+            tidLocks.remove(tid);
         }
 
         private synchronized boolean holdsLock(TransactionId tid, PageId pid) {

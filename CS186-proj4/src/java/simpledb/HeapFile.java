@@ -160,14 +160,16 @@ public class HeapFile implements DbFile {
             freePage = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()), Permissions.READ_WRITE);
             writePage(freePage); // append the new data from a new page to the disk
         }
+        
         freePage.insertTuple(t);
         freePage.markDirty(true, tid);
+        Database.getBufferPool().addDirtyPage(freePage.getId());
         if (freePage.getNumEmptySlots() > 0) {
             freePages.put(freePage.getId().pageNumber(), true);
         } else {
             freePages.put(freePage.getId().pageNumber(), false);
         }
-        Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), numPages()));
+        //Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), numPages()));
         modPages.add(freePage);
         return modPages;
     }
@@ -191,6 +193,7 @@ public class HeapFile implements DbFile {
         // delete the tuple from the page
         page.deleteTuple(t);
         page.markDirty(true, tid);
+        Database.getBufferPool().addDirtyPage(page.getId());
         // mark the page as free
         freePages.put(page.getId().pageNumber(), true);
         return page;
