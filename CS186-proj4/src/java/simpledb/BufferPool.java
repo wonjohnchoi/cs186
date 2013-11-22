@@ -78,9 +78,6 @@ public class BufferPool {
      */
     public synchronized Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // TODO(wonjohn): Should we ignore tid and perm?
-        // For now, yes; see https://piazza.com/class/hhrd9gio9n21s5?cid=70
-
         // Check if we have cached page.
         if (!pidToPage.containsKey(pid)) {
             // If new page is requested and BufferPool is full, throw exception.
@@ -113,18 +110,32 @@ public class BufferPool {
             }
             timeToPid.put(System.currentTimeMillis(), pid);
         }
-        boolean acquired = false;
-        if (perm.equals(Permissions.READ_ONLY)) { // acquire shared lock
-            acquired = locks.acquire(tid, pid, false);
-            while (!acquired) {
+        // Needed to make previous tests not using perm pass
+        if (perm != null) {
+            // Measure how many seconds it takes for the desired permission
+            // is acquired. If it takes more than 5 seconds,
+            // abort the current transaction.
+            long startTime = System.currentTimeMillis();
+            boolean acquired = false;
+            if (perm.equals(Permissions.READ_ONLY)) { // acquire shared lock
                 acquired = locks.acquire(tid, pid, false);
-            }
-        } else { // acquire exclusive lock
-            acquired = locks.acquire(tid, pid, true);
-            while (!acquired) {
+                while (!acquired) {
+                    if (System.currentTimeMillis() > startTime + 5000) {
+                        throw new TransactionAbortedException();
+                    }
+                    acquired = locks.acquire(tid, pid, false);
+                }
+            } else { // acquire exclusive lock
                 acquired = locks.acquire(tid, pid, true);
+                while (!acquired) {
+                    if (System.currentTimeMillis() > startTime + 5000) {
+                        throw new TransactionAbortedException();
+                    }
+                    acquired = locks.acquire(tid, pid, true);
+                }
             }
         }
+
         LinkedList<PageId> pids = tidToPids.get(tid);
         if (pids == null) {
             pids = new LinkedList<PageId>();
@@ -279,6 +290,7 @@ public class BufferPool {
      */
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         LinkedList<PageId> pids = tidToPids.get(tid);
+        if (pids == null) return;
         for (PageId pid : pids) {
             flushPage(pid);
         }
@@ -386,6 +398,7 @@ public class BufferPool {
 
         private synchronized void releaseLocks(TransactionId tid) {
             ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
+            if (pids == null) return;
             for (PageId pid : pids) {
                 release(tid, pid);
             }
