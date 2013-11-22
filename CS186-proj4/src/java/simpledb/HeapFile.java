@@ -39,7 +39,6 @@ public class HeapFile implements DbFile {
         // TODO(wonjohn): in future, we may need to deal with a case
         // in which this hashcode is not unique.
         id = f.getAbsoluteFile().hashCode();
-
         try {
             raf = new RandomAccessFile(file, "rw");
             freePages = new HashMap<Integer, Boolean>();
@@ -153,7 +152,12 @@ public class HeapFile implements DbFile {
             if (freePages.get(i)) {
                 HeapPageId pid = new HeapPageId(getId(), i);
                 freePage = (HeapPage)Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
-                break;
+                if (freePage.isFreePage()) {
+                    break;
+                } else {
+                    freePage = null;
+                    freePages.put(i, false);
+                }
             }
         }
         if (freePage == null) {
@@ -221,7 +225,7 @@ public class HeapFile implements DbFile {
                     pageIt = ((HeapPage)bp.getPage(
                                                    tid,
                                                    new HeapPageId(id, pageNumber),
-                                                   null)).iterator();
+                                                   Permissions.READ_ONLY)).iterator();
                     pageNumber += 1;
                 }
             }
@@ -232,7 +236,7 @@ public class HeapFile implements DbFile {
                 }
                 
                 while (!pageIt.hasNext() && pageNumber < numPages()) {
-                    pageIt = ((HeapPage)bp.getPage(tid, new HeapPageId(id, pageNumber), null)).iterator();
+                    pageIt = ((HeapPage)bp.getPage(tid, new HeapPageId(id, pageNumber), Permissions.READ_ONLY)).iterator();
                     pageNumber += 1;
                 } 
                 return pageIt.hasNext();

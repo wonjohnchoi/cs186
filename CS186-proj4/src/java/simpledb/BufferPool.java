@@ -263,14 +263,16 @@ public class BufferPool {
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
         Page page = pidToPage.get(pid);
-        TransactionId dirtyTid = page.isDirty();
-        if (dirtyTid != null) {
-            // TODO(wonjohn): what should we use as transaction id?
-            // Currently, it is set to tid that dirtied this page before.
-            page.markDirty(false, dirtyTid);
-            DbFile dbFile = Database.getCatalog().getDbFile(pid.getTableId());
-            dbFile.writePage(page);
-        }        
+        if (page != null) {
+            TransactionId dirtyTid = page.isDirty();
+            if (dirtyTid != null) {
+                // TODO(wonjohn): what should we use as transaction id?
+                // Currently, it is set to tid that dirtied this page before.
+                page.markDirty(false, dirtyTid);
+                DbFile dbFile = Database.getCatalog().getDbFile(pid.getTableId());
+                dbFile.writePage(page);
+            }        
+        }
     }
 
     /** Write all pages of the specified transaction to disk.

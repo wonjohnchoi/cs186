@@ -26,7 +26,7 @@ public class AbortEvictionTest extends SimpleDbTestBase {
         // Insert a new row
         EvictionTest.insertRow(f, t);
 
-	System.out.println(Database.getBufferPool().toString());
+	// System.out.println(Database.getBufferPool().toString());
 
         // The tuple must exist in the table
         boolean found = EvictionTest.findMagicTuple(f, t);
