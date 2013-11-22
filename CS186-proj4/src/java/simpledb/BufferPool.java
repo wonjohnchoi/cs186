@@ -182,7 +182,9 @@ public class BufferPool {
                         page.setBeforeImage();
                         Page recovery = page.getBeforeImage();
                         pidToPage.put(pid, recovery);
+                        dirtyPages.remove(pid);
                     }
+                    dirtyPages.remove(pid);
                 }
             }
             locks.releaseLocks(tid);
