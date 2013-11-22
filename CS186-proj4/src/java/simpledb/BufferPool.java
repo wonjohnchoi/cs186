@@ -173,6 +173,7 @@ public class BufferPool {
                         pidToPage.put(pid, recovery);
                         dirtyPages.remove(pid);
                     }
+                    dirtyPages.remove(pid);
                 }
             }
             locks.releaseLocks(tid);
