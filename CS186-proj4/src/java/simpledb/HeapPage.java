@@ -256,9 +256,7 @@ public class HeapPage implements Page {
                 break;
             }
         }
-        System.out.println("");
         TupleDesc tupleTD = t.getTupleDesc();
-        System.out.println(slot);
         if (slot == -1 || !tupleTD.equals(td)) { // when the page is full or tupledesc is mismatch
             throw new DbException("tuple cannot be inserted!");
         } else {
