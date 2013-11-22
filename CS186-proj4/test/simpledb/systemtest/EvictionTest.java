@@ -50,6 +50,7 @@ public class EvictionTest extends SimpleDbTestBase {
 
         // Insert the row
         Insert insert = new Insert(t.getId(), insertRow, f.getId());
+	Database.getBufferPool().toString();
         insert.open();
         Tuple result = insert.next();
         assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, result.getTupleDesc());

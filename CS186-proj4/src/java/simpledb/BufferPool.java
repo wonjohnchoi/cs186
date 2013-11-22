@@ -50,6 +50,17 @@ public class BufferPool {
         tidToPids = new HashMap<TransactionId, LinkedList<PageId>>();
     }
 
+    public String toString() {
+        String s = "";
+        for (PageId pid : dirtyPages) {
+            s = s + pid.toString();
+        }
+        if (s.equals("")) { 
+            return "No dirty pages in BufferPool";
+        }
+        return s;
+    }
+
     /**
      * Retrieve the specified page with the associated permissions.
      * Will acquire a lock and may block if that lock is held by another
