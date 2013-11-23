@@ -167,7 +167,6 @@ public class HeapFile implements DbFile {
         
         freePage.insertTuple(t);
         freePage.markDirty(true, tid);
-        Database.getBufferPool().addDirtyPage(freePage.getId());
         if (freePage.getNumEmptySlots() > 0) {
             freePages.put(freePage.getId().pageNumber(), true);
         } else {
@@ -197,7 +196,6 @@ public class HeapFile implements DbFile {
         // delete the tuple from the page
         page.deleteTuple(t);
         page.markDirty(true, tid);
-        Database.getBufferPool().addDirtyPage(page.getId());
         // mark the page as free
         freePages.put(page.getId().pageNumber(), true);
         return page;

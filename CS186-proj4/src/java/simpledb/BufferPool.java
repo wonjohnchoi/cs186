@@ -29,12 +29,8 @@ public class BufferPool {
     // to pageid. Used to find pageid that is
     // least recently used.
     private TreeMap<Long, PageId> timeToPid;
-    // Keep track of the dirty pages
-    private HashSet<PageId> dirtyPages;
     // Manages locks
     private Locks locks;
-    // map tid to the list of pid's the transaction is using
-    private HashMap<TransactionId, LinkedList<PageId>> tidToPids;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -45,20 +41,7 @@ public class BufferPool {
         this.numPages = numPages;
         pidToPage = new HashMap<PageId, Page>();
         timeToPid = new TreeMap<Long, PageId>();
-        dirtyPages = new HashSet<PageId>();
         locks = new Locks();
-        tidToPids = new HashMap<TransactionId, LinkedList<PageId>>();
-    }
-
-    public String toString() {
-        String s = "";
-        for (PageId pid : dirtyPages) {
-            s = s + pid.toString();
-        }
-        if (s.equals("")) { 
-            return "No dirty pages in BufferPool";
-        }
-        return s;
     }
 
     /**
@@ -134,13 +117,6 @@ public class BufferPool {
                 acquired = locks.acquire(tid, pid, true);
             }
         }
-
-        LinkedList<PageId> pids = tidToPids.get(tid);
-        if (pids == null) {
-            pids = new LinkedList<PageId>();
-        }
-        pids.add(pid);
-        tidToPids.put(tid, pids);
         //}
         return pidToPage.get(pid);
     }
@@ -156,12 +132,6 @@ public class BufferPool {
      */
     public synchronized void releasePage(TransactionId tid, PageId pid) {
         locks.release(tid, pid);
-        // If a transaction holds a page,
-        // it means tidToPids contain the page for the tid.
-        // We need to update the data structure as well.
-        assert (tidToPids.get(tid).remove(pid));
-        // TODO(wonjohn): Also, don't we have to delete dirty pageId
-        // from dirtyPages?
     }
 
     /**
@@ -170,7 +140,6 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public synchronized void transactionComplete(TransactionId tid) throws IOException {
-        flushPages(tid);
         locks.releaseLocks(tid);
     }
 
@@ -188,22 +157,20 @@ public class BufferPool {
      */
     public synchronized void transactionComplete(TransactionId tid, boolean commit)
         throws IOException {
+        // release all locks associated with tid
+        transactionComplete(tid);
         if (commit) { // commit
-            transactionComplete(tid);
+            flushPages(tid);
         } else { // abort
-            LinkedList<PageId> pids = tidToPids.get(tid);
-            for (PageId pid : pids) {
-                if (dirtyPages.contains(pid)) {
-                    Page page = pidToPage.get(pid);
-                    if (page.isDirty().equals(tid)) {
-                        page.setBeforeImage();
-                        Page recovery = page.getBeforeImage();
-                        pidToPage.put(pid, recovery);
-                        dirtyPages.remove(pid);
-                    }
+            // logic for recovery
+            for (PageId pid : pidToPage.keySet()) {
+                Page page = pidToPage.get(pid);
+                TransactionId dirtyTid = page.isDirty();
+                if (dirtyTid != null && dirtyTid.equals(tid)) {
+                    page.setBeforeImage();
+                    pidToPage.put(pid, page.getBeforeImage());
                 }
             }
-            locks.releaseLocks(tid);
         }
     }
 
@@ -225,11 +192,6 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         DbFile file = Database.getCatalog().getDbFile(tableId);
         file.insertTuple(tid, t);
-    }
-
-    // add a page to the dirty page set
-    public synchronized void addDirtyPage(PageId pid) {
-        dirtyPages.add(pid);
     }
 
     /**
@@ -301,14 +263,14 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
-        Map.Entry<Long, PageId> timeAndPid = null;
         PageId pid = null;
-        // picking the page that is not dirty
-        while (timeToPid.size() > 0) {
-            timeAndPid = timeToPid.firstEntry();
-            if (!dirtyPages.contains(timeAndPid.getValue())) {
-                pid = timeAndPid.getValue();
-                timeToPid.remove(timeAndPid.getKey());
+        long time = -1;
+        Iterator<Long> iter = timeToPid.keySet().iterator();
+        // this goes through map in ascending order.
+        while (iter.hasNext()) {
+            time = iter.next();
+            pid = timeToPid.get(time);
+            if (pidToPage.get(pid).isDirty() != null) {
                 break;
             }
         }
@@ -316,7 +278,9 @@ public class BufferPool {
         if (pid == null) {
             throw new DbException("No page to evict!");
         }
-        //PageId pid = timeAndPid.getValue();
+        // else remove the entry from timeToPid.
+        assert(timeToPid.remove(time) != null);
+
         // flush before removing pid from pidToPage because flush uses pid.
         try {
             flushPage(pid);
@@ -324,10 +288,7 @@ public class BufferPool {
             throw new DbException("Cannot flush page");
         }
 
-        if (pidToPage.remove(pid) == null) {
-            System.out.println("There is an error in BufferPool.");
-            System.exit(1);
-        }
+        assert (pidToPage.remove(pid) != null);
     }
     
     // private class that manages the locks
