@@ -161,6 +161,7 @@ public class HeapFile implements DbFile {
             }
         }
         if (freePage == null) {
+            System.out.println("Creating new shit..");
             freePage = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()), Permissions.READ_WRITE);
             writePage(freePage); // append the new data from a new page to the disk
         }

@@ -159,15 +159,13 @@ public class BufferPool {
         throws IOException {
         // release all locks associated with tid
         transactionComplete(tid);
-        if (commit) { // commit
-            flushPages(tid);
-        } else { // abort
+        // abort
+        if (!commit) {
             // logic for recovery
             for (PageId pid : pidToPage.keySet()) {
                 Page page = pidToPage.get(pid);
                 TransactionId dirtyTid = page.isDirty();
                 if (dirtyTid != null && dirtyTid.equals(tid)) {
-                    page.setBeforeImage();
                     pidToPage.put(pid, page.getBeforeImage());
                 }
             }
@@ -252,7 +250,7 @@ public class BufferPool {
         for (PageId pid : pidToPage.keySet()) {
             Page page = pidToPage.get(pid);
             TransactionId dirtyTid = page.isDirty();
-            if (dirtyTid.equals(tid)) {
+            if (dirtyTid != null && dirtyTid.equals(tid)) {
                 flushPage(pid);
             }
         }
