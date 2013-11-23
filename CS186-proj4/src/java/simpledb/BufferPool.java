@@ -304,9 +304,10 @@ public class BufferPool {
         PageId pid = null;
         // picking the page that is not dirty
         while (timeToPid.size() > 0) {
-            timeAndPid = timeToPid.pollFirstEntry();
+            timeAndPid = timeToPid.firstEntry();
             if (!dirtyPages.contains(timeAndPid.getValue())) {
                 pid = timeAndPid.getValue();
+                timeToPid.remove(timeAndPid.getKey());
                 break;
             }
         }
