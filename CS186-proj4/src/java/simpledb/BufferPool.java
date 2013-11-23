@@ -156,6 +156,12 @@ public class BufferPool {
      */
     public synchronized void releasePage(TransactionId tid, PageId pid) {
         locks.release(tid, pid);
+        // If a transaction holds a page,
+        // it means tidToPids contain the page for the tid.
+        // We need to update the data structure as well.
+        assert (tidToPids.get(tid).remove(pid));
+        // TODO(wonjohn): Also, don't we have to delete dirty pageId
+        // from dirtyPages?
     }
 
     /**
