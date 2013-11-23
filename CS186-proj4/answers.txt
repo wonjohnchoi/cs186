@@ -1,0 +1,8 @@
+1) We implemented page-level locking. Instead of using java lock class, we decided to create a private class Locks that manages which transaction holds locks for which pages. Inside Locks class, there are three HashMaps to manage this: HashMap of shared lock (maps PageId to the list of Tids holding locks), HashMap of exclusive lock (maps PageId to tid), and HashMap of list of locks held my transaction. Lock acquiring method returns true when the transaction acquired the lock, otherwise false. There's a while loop with acquire() in getPage(), so that the page can be returned only after the transaction acquired the lock. Locks are released only after the transaction commits (strict 2PL).
+
+2)
+
+3) We aimed to guarantee Atomicity (by using synchronized methods), Consistency, Isolation (strict 2PL), and Durability (we restore dirty pages when the transaction aborts).
+
+4) 
+
