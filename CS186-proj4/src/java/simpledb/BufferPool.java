@@ -155,7 +155,9 @@ public class BufferPool {
         // release all locks associated with tid
         transactionComplete(tid);
         // abort
-        if (!commit) {
+        if (commit) {
+            flushPages(tid);
+        } else {
             // logic for recovery
             for (PageId pid : pidToPage.keySet()) {
                 Page page = pidToPage.get(pid);
