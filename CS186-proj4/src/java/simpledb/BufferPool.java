@@ -104,7 +104,7 @@ public class BufferPool {
             acquired = locks.acquire(tid, pid, false);
             while (!acquired) {
                 if (System.currentTimeMillis() > startTime + 5000) {
-                    //throw new TransactionAbortedException();
+                    throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, false);
             }
@@ -112,7 +112,7 @@ public class BufferPool {
             acquired = locks.acquire(tid, pid, true);
             while (!acquired) {
                 if (System.currentTimeMillis() > startTime + 5000) {
-                    //throw new TransactionAbortedException();
+                    throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, true);
             }
