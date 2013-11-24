@@ -143,7 +143,7 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
+    public synchronized ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
         ArrayList<Page> modPages = new ArrayList<Page>();
         HeapPage freePage = null;
@@ -173,13 +173,12 @@ public class HeapFile implements DbFile {
         } else {
             freePages.put(freePage.getId().pageNumber(), false);
         }
-        Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), numPages()));
         modPages.add(freePage);
         return modPages;
     }
 
     // see DbFile.java for javadocs
-    public Page deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException {
+    public synchronized Page deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException {
         RecordId rid = t.getRecordId();
         PageId pid = rid.getPageId();
         boolean pgNotExist = true;
@@ -203,6 +202,7 @@ public class HeapFile implements DbFile {
         return page;
     }
 
+    
     // see DbFile.java for javadocs
     public DbFileIterator iterator(final TransactionId tid) {
         return new DbFileIterator() {
@@ -211,7 +211,7 @@ public class HeapFile implements DbFile {
             int pageNumber;
             Iterator<Tuple> pageIt;
 
-            public void open()
+            public synchronized void open()
                 throws DbException, TransactionAbortedException {
                 // The iterator of the current page
                 pageIt = null;

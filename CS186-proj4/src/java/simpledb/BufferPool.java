@@ -76,7 +76,7 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public synchronized Page getPage(TransactionId tid, PageId pid, Permissions perm)
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // Check if we have cached page.
         if (!pidToPage.containsKey(pid)) {
@@ -100,7 +100,7 @@ public class BufferPool {
             timeToPid.put(System.currentTimeMillis(), pid);
         } else {
             for (Map.Entry<Long, PageId> timeAndPid : timeToPid.entrySet()) {
-                if (timeAndPid.getValue().equals(pid)) {
+                if (timeAndPid.getValue().equals(pid)) { 
                     if (timeToPid.remove(timeAndPid.getKey()) == null) {
                         System.out.println("Should never happen in BufferPool.");
                         System.exit(1);
@@ -120,7 +120,7 @@ public class BufferPool {
             if (perm.equals(Permissions.READ_ONLY)) { // acquire shared lock
                 acquired = locks.acquire(tid, pid, false);
                 while (!acquired) {
-                    if (System.currentTimeMillis() > startTime + 5000) {
+                    if (System.currentTimeMillis() > startTime + 500) {
                         throw new TransactionAbortedException();
                     }
                     acquired = locks.acquire(tid, pid, false);
@@ -128,7 +128,7 @@ public class BufferPool {
             } else { // acquire exclusive lock
                 acquired = locks.acquire(tid, pid, true);
                 while (!acquired) {
-                    if (System.currentTimeMillis() > startTime + 5000) {
+                    if (System.currentTimeMillis() > startTime + 500) {
                         throw new TransactionAbortedException();
                     }
                     acquired = locks.acquire(tid, pid, true);
@@ -186,16 +186,18 @@ public class BufferPool {
             transactionComplete(tid);
         } else { // abort
             LinkedList<PageId> pids = tidToPids.get(tid);
-            for (PageId pid : pids) {
-                if (dirtyPages.contains(pid)) {
-                    Page page = pidToPage.get(pid);
-                    if (page.isDirty().equals(tid)) {
-                        page.setBeforeImage();
-                        Page recovery = page.getBeforeImage();
-                        pidToPage.put(pid, recovery);
+            if (pids != null) {
+                for (PageId pid : pids) {
+                    if (dirtyPages.contains(pid)) {
+                        Page page = pidToPage.get(pid);
+                        if (page.isDirty().equals(tid)) {
+                            page.setBeforeImage();
+                            Page recovery = page.getBeforeImage();
+                            pidToPage.put(pid, recovery);
+                            dirtyPages.remove(pid);
+                        }
                         dirtyPages.remove(pid);
                     }
-                    dirtyPages.remove(pid);
                 }
             }
             locks.releaseLocks(tid);

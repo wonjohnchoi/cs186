@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
  */
 public class TransactionTest extends SimpleDbTestBase {
     // Wait up to 10 minutes for the test to complete
-    private static final int TIMEOUT_MILLIS = 10 * 60 * 1000;
+    private static final int TIMEOUT_MILLIS = 4 * 60 * 1000;
     private void validateTransactions(int threads)
             throws DbException, TransactionAbortedException, IOException {
         // Create a table with a single integer value = 0
@@ -92,7 +92,8 @@ public class TransactionTest extends SimpleDbTestBase {
                         tr.start();
                         SeqScan ss1 = new SeqScan(tr.getId(), tableId, "");
                         SeqScan ss2 = new SeqScan(tr.getId(), tableId, "");
-
+ 
+                        tr.start();
                         // read the value out of the table
                         Query q1 = new Query(ss1, tr.getId());
                         q1.start();

@@ -230,7 +230,7 @@ public class HeapPage implements Page {
      *         already empty.
      * @param t The tuple to delete
      */
-    public void deleteTuple(Tuple t) throws DbException {
+    public synchronized void deleteTuple(Tuple t) throws DbException {
         RecordId rid = t.getRecordId();
         int slot = rid.tupleno();
         if (rid == null || !rid.getPageId().equals(this.pid) || !isSlotUsed(slot)) { // if tuple is not on this page or the slot is already empty 
@@ -248,7 +248,7 @@ public class HeapPage implements Page {
      *         is mismatch.
      * @param t The tuple to add.
      */
-    public void insertTuple(Tuple t) throws DbException {
+    public synchronized void insertTuple(Tuple t) throws DbException {
         int slot = -1;
         for (int i = 0; i < 8 * header.length; i++) {
             if (!isSlotUsed(i)) {
