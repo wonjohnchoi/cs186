@@ -83,6 +83,11 @@ public class BufferPool {
             acquired = locks.acquire(tid, pid, false);
             while (!acquired) {
                 if (System.currentTimeMillis() > startTime + 500) {
+                    try {
+                        transactionComplete(tid, false);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                     throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, false);
@@ -91,6 +96,12 @@ public class BufferPool {
             acquired = locks.acquire(tid, pid, true);
             while (!acquired) {
                 if (System.currentTimeMillis() > startTime + 500) {
+                    pidToPage.get(pid).markDirty(false, tid);
+                    try {
+                        transactionComplete(tid, false);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                     throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, true);
