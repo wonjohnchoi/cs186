@@ -147,6 +147,7 @@ public class BufferPool {
                 Page page = pidToPage.get(pid);
                 TransactionId dirtyTid = page.isDirty();
                 if (dirtyTid != null && dirtyTid.equals(tid)) {
+                    page.markDirty(false, dirtyTid);
                     pidToPage.put(pid, page.getBeforeImage());
                 }
             }
