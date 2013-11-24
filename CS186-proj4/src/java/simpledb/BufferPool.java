@@ -68,6 +68,7 @@ public class BufferPool {
             try {
                 page = (HeapPage)Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
             } catch (IllegalArgumentException ex) {
+                ex.printStackTrace();
             }
             pidToPage.put(pid, page);
         }
