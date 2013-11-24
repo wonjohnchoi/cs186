@@ -74,14 +74,14 @@ public class BufferPool {
         // Needed to make previous tests not using perm pass
         // if (perm != null) {
         // Measure how many seconds it takes for the desired permission
-        // is acquired. If it takes more than 5 seconds,
+        // is acquired. If it takes more than .5 seconds,
         // abort the current transaction.
         long startTime = System.currentTimeMillis();
         boolean acquired = false;
         if (perm.equals(Permissions.READ_ONLY)) { // acquire shared lock
             acquired = locks.acquire(tid, pid, false);
             while (!acquired) {
-                if (System.currentTimeMillis() > startTime + 5000) {
+                if (System.currentTimeMillis() > startTime + 500) {
                     throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, false);
@@ -89,7 +89,7 @@ public class BufferPool {
         } else { // acquire exclusive lock
             acquired = locks.acquire(tid, pid, true);
             while (!acquired) {
-                if (System.currentTimeMillis() > startTime + 5000) {
+                if (System.currentTimeMillis() > startTime + 500) {
                     throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, true);
