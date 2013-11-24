@@ -91,15 +91,12 @@ public class TransactionTest extends SimpleDbTestBase {
                     try {
                         tr.start();
                         SeqScan ss1 = new SeqScan(tr.getId(), tableId, "");
-                        System.out.println("A");
                         SeqScan ss2 = new SeqScan(tr.getId(), tableId, "");
-                        System.out.println("B");
+
                         // read the value out of the table
                         Query q1 = new Query(ss1, tr.getId());
                         q1.start();
-                        System.out.println("C");
                         Tuple tup = q1.next();
-                        System.out.println("D");
                         IntField intf = (IntField) tup.getField(0);
                         int i = intf.getValue();
 
@@ -110,7 +107,7 @@ public class TransactionTest extends SimpleDbTestBase {
 
                         // sleep to get some interesting thread interleavings
                         Thread.sleep(1);
-                        System.out.println("E");
+
                         // race the other threads to finish the transaction: one will win
                         q1.close();
 
@@ -120,11 +117,9 @@ public class TransactionTest extends SimpleDbTestBase {
                         Query q2 = new Query(delOp, tr.getId());
 
                         q2.start();
-                        System.out.println("E.2");
                         q2.next();
-                        System.out.println("E.3");
                         q2.close();
-                        System.out.println("F");
+
                         // set up a Set with a tuple that is one higher than the old one.
                         HashSet<Tuple> hs = new HashSet<Tuple>();
                         hs.add(t);
@@ -134,16 +129,13 @@ public class TransactionTest extends SimpleDbTestBase {
                         Insert insOp = new Insert(tr.getId(), ti, tableId);
                         Query q3 = new Query(insOp, tr.getId());
                         q3.start();
-                        System.out.println("G");
                         q3.next();
-                        System.out.println("H");
                         q3.close();
-                        System.out.println("I");
+
                         tr.commit();
-                        System.out.println("J");
                         break;
                     } catch (TransactionAbortedException te) {
-                        System.out.println("thread " + tr.getId() + " killed");
+                        //System.out.println("thread " + tr.getId() + " killed");
                         // give someone else a chance: abort the transaction
                         tr.transactionComplete(true);
                         latch.stillParticipating();
@@ -216,17 +208,17 @@ public class TransactionTest extends SimpleDbTestBase {
     
     @Test public void testSingleThread()
             throws IOException, DbException, TransactionAbortedException {
-        //validateTransactions(1);
+        validateTransactions(1);
     }
 
     @Test public void testTwoThreads()
             throws IOException, DbException, TransactionAbortedException {
-        //validateTransactions(2);
+        validateTransactions(2);
     }
 
     @Test public void testFiveThreads()
             throws IOException, DbException, TransactionAbortedException {
-        //validateTransactions(5);
+        validateTransactions(5);
     }
     
     @Test public void testTenThreads()
