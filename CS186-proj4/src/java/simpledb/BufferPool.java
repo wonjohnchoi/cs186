@@ -138,10 +138,11 @@ public class BufferPool {
         throws IOException {
         // release all locks associated with tid
         transactionComplete(tid);
-        // abort
+        // commit
         if (commit) {
             flushPages(tid);
         } else {
+            // abort
             // logic for recovery
             for (PageId pid : pidToPage.keySet()) {
                 Page page = pidToPage.get(pid);
