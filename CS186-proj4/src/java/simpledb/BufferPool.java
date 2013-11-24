@@ -25,10 +25,6 @@ public class BufferPool {
     private int numPages;
 
     private HashMap<PageId, Page> pidToPage;
-    // Map time a page is put in a bufferpool
-    // to pageid. Used to find pageid that is
-    // least recently used.
-    private TreeMap<Long, PageId> timeToPid;
     // Manages locks
     private Locks locks;
 
@@ -40,7 +36,6 @@ public class BufferPool {
     public BufferPool(int numPages) {
         this.numPages = numPages;
         pidToPage = new HashMap<PageId, Page>();
-        timeToPid = new TreeMap<Long, PageId>();
         locks = new Locks();
     }
 
@@ -75,18 +70,6 @@ public class BufferPool {
             } catch (IllegalArgumentException ex) {
             }
             pidToPage.put(pid, page);
-            timeToPid.put(System.currentTimeMillis(), pid);
-        } else {
-            for (Map.Entry<Long, PageId> timeAndPid : timeToPid.entrySet()) {
-                if (timeAndPid.getValue().equals(pid)) {
-                    if (timeToPid.remove(timeAndPid.getKey()) == null) {
-                        System.out.println("Should never happen in BufferPool.");
-                        System.exit(1);
-                    }
-                    break;
-                }
-            }
-            timeToPid.put(System.currentTimeMillis(), pid);
         }
         // Needed to make previous tests not using perm pass
         // if (perm != null) {
@@ -259,30 +242,22 @@ public class BufferPool {
      */
     private synchronized void evictPage() throws DbException {
         PageId pid = null;
-        long time = -1;
-        Iterator<Long> iter = timeToPid.keySet().iterator();
-        // this goes through map in ascending order.
-        while (iter.hasNext()) {
-            time = iter.next();
-            pid = timeToPid.get(time);
-            if (pidToPage.get(pid).isDirty() != null) {
-                break;
+        for (PageId pid0 : pidToPage.keySet()) {
+            // clean
+            if (pidToPage.get(pid0).isDirty() == null) {
+                pid = pid0;
             }
         }
         // if all pages are dirty, throw DbException
         if (pid == null) {
             throw new DbException("No page to evict!");
         }
-        // else remove the entry from timeToPid.
-        assert(timeToPid.remove(time) != null);
-
         // flush before removing pid from pidToPage because flush uses pid.
         try {
             flushPage(pid);
         } catch (IOException ex) {
             throw new DbException("Cannot flush page");
         }
-
         assert (pidToPage.remove(pid) != null);
     }
     
