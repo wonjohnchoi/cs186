@@ -72,8 +72,6 @@ public class BufferPool {
             }
             pidToPage.put(pid, page);
         }
-        // Needed to make previous tests not using perm pass
-        // if (perm != null) {
         // Measure how many seconds it takes for the desired permission
         // is acquired. If it takes more than .5 seconds,
         // abort the current transaction.
@@ -107,7 +105,6 @@ public class BufferPool {
                 acquired = locks.acquire(tid, pid, true);
             }
         }
-        //}
         return pidToPage.get(pid);
     }
 

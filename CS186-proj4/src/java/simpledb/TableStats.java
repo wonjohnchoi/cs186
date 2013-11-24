@@ -85,7 +85,7 @@ public class TableStats {
      */
     public TableStats(int tableid, int ioCostPerPage) {
         DbFile df = Database.getCatalog().getDbFile(tableid);
-        DbFileIterator dfIt = df.iterator(null);
+        DbFileIterator dfIt = df.iterator(new TransactionId());
         int numFields = df.getTupleDesc().numFields();
         int[] mins = new int[numFields];
         int[] maxs = new int[numFields];
