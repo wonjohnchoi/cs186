@@ -80,12 +80,13 @@ public class BufferPool {
         if (perm.equals(Permissions.READ_ONLY)) { // acquire shared lock
             acquired = locks.acquire(tid, pid, false);
             while (!acquired) {
-                if (System.currentTimeMillis() > startTime + 500) {
+                if (System.currentTimeMillis() > startTime + 2000) {
                     try {
                         transactionComplete(tid, false);
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
+                    System.out.println("Shared");
                     throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, false);
@@ -93,13 +94,14 @@ public class BufferPool {
         } else { // acquire exclusive lock
             acquired = locks.acquire(tid, pid, true);
             while (!acquired) {
-                if (System.currentTimeMillis() > startTime + 500) {
+                if (System.currentTimeMillis() > startTime + 2000) {
                     pidToPage.get(pid).markDirty(false, tid);
                     try {
                         transactionComplete(tid, false);
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
+                    System.out.println("Exclusive");
                     throw new TransactionAbortedException();
                 }
                 acquired = locks.acquire(tid, pid, true);
@@ -281,12 +283,13 @@ public class BufferPool {
         // map tid to the list of locks the transaction is holding
         ConcurrentHashMap<TransactionId, ConcurrentLinkedQueue<PageId>> tidLocks;
         // constructor
+        boolean debug = true;
         private Locks() {
             shared = new ConcurrentHashMap<PageId, ConcurrentLinkedQueue<TransactionId>>();
             exclusive = new ConcurrentHashMap<PageId, TransactionId>();
             tidLocks = new ConcurrentHashMap<TransactionId, ConcurrentLinkedQueue<PageId>>();
         }
-        
+
         // acquire the lock for the specific page. Returns true if the lock is acquired.
         private synchronized boolean acquire(TransactionId tid, PageId pid, boolean exc) {
             // acquire the lock for the specific page
@@ -294,32 +297,49 @@ public class BufferPool {
             TransactionId excTid = exclusive.get(pid);   
             if (exc) { // handles exclusive lock
                 if (tids != null && ((tids.size() == 1 && !tids.contains(tid)) || tids.size() > 1)) {
+                    if (debug) {
+                        for (TransactionId tid0 : tids)
+                            System.out.println(tid0.getId());
+                        System.out.println("There are one or more shared locks that are not my tid: " + tid.getId());
+                        debug = false;
+                    }
                     return false;
                 }
                 if (excTid != null && !excTid.equals(tid)) {
+                    if (debug) {
+                        System.out.println("There are execute lock that is not mine");
+                        debug = false;
+                    }
                     return false;
                 }
-                exclusive.put(pid, tid);
-                ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
+               ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
                 if (pids == null) {
                     pids = new ConcurrentLinkedQueue<PageId>();
                 }
-                pids.add(pid);
-                tidLocks.put(tid, pids); 
+                if (!pids.contains(pid))
+                    pids.add(pid);
+                if (tids != null && tids.contains(tid)) {
+                    tids.remove(tid);
+                }
+                tidLocks.put(tid, pids);
+                exclusive.put(pid, tid);
                 return true;
             } else { // handles shared lock
                 if (excTid == null || excTid.equals(tid)) {
                     if (tids == null) {
                         tids = new ConcurrentLinkedQueue<TransactionId>();
-                    } 
-                    tids.add(tid);
-                    shared.put(pid, tids);
+                    }
                     ConcurrentLinkedQueue<PageId> pids = tidLocks.get(tid);
                     if (pids == null) {
                         pids = new ConcurrentLinkedQueue<PageId>();
                     }
-                    pids.add(pid);
-                    tidLocks.put(tid, pids); 
+                    if (!pids.contains(pid))
+                        pids.add(pid);
+                    tidLocks.put(tid, pids);
+                    if (excTid == null && !tids.contains(tid)) {
+                        tids.add(tid);
+                        shared.put(pid, tids);
+                    }
                     return true;
                 }
             }
