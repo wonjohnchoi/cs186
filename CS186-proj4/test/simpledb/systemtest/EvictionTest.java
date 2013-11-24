@@ -26,7 +26,7 @@ public class EvictionTest extends SimpleDbTestBase {
         System.out.println("EvictionTest scanning large table");
         Database.resetBufferPool(BUFFER_PAGES);
         long beginMem = SystemTestUtil.getMemoryFootprint();
-        SeqScan scan = new SeqScan(new TransactionId(), f.getId(), "");
+        SeqScan scan = new SeqScan(null, f.getId(), "");
         scan.open();
         while (scan.hasNext()) {
             scan.next();
@@ -50,7 +50,6 @@ public class EvictionTest extends SimpleDbTestBase {
 
         // Insert the row
         Insert insert = new Insert(t.getId(), insertRow, f.getId());
-	Database.getBufferPool().toString();
         insert.open();
         Tuple result = insert.next();
         assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, result.getTupleDesc());
