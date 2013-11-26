@@ -7,7 +7,7 @@ In part 2.3, we ask you to implement NO STEAL/FORCE buffer management policy and
 If our system could crash while running transacitonComplete, then the system could crash after we committed some but not all of the transaction's changes. Then, we have no way of knowing which dirty pages were committed. Hence, we will need some logging system to keep track of which dirty pages were affected. Then, our program could UNDO everything and notify user of failed commit.
 
 What ACID properties do these simplifications above aim to guarantee?
-3) NO STEAL/FORCE implementation helps ensure atomicity and durability because STEAL/NO FORCE makes it complicated to support atomicity and durability (disscussed in 2). If we assume that system won't crash while running transactionComplete, atomicity is guaranteeed because if system crashes during transactionComplete, then we can be left in an intermediate state in which commit is only partially done.
+3) NO STEAL implementation helps ensure atomicity and FORCE implementation helps ensure durability (as disscussed in 2). If we assume that system won't crash while running transactionComplete, atomicity is guaranteeed because if system crashes during transactionComplete, then we can be left in an intermediate state in which commit is only partially done.
 
 Discuss and justify any changes you made to the API.
 4) We did not make any API change.
